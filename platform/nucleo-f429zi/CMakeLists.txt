@@ -1,0 +1,1 @@
+include(platform/stm32f429-core/CMakeLists.txt)
