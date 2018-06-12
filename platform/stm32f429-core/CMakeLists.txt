@@ -1,11 +1,11 @@
 # Cross-compiler settings
 set(CMAKE_C_COMPILER arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-set(AS arm-none-eabi-as)
-set(AR arm-none-eabi-ar)
+set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
+set(CMAKE_AR arm-none-eabi-ar)
 set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-set(OBJDUMP arm-none-eabi-objdump)
-set(SIZE arm-none-eabi-size)
+set(CMAKE_OBJDUMP arm-none-eabi-objdump)
+set(CMAKE_SIZE arm-none-eabi-size)
 
 add_definitions(-D__weak=__attribute__\(\(weak\)\) -D__packed=__attribute__\(\(__packed__\)\) -DUSE_HAL_DRIVER -DSTM32F407xx )
 set(COMMON_FLAGS "-mcpu=cortex-m4 ${FPU_FLAGS} -mthumb -mthumb-interwork -ffunction-sections -fdata-sections -g -fno-common -fmessage-length=0 -specs=nosys.specs -specs=nano.specs")
@@ -19,7 +19,17 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -std=gnu99")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,-gc-sections -T ${LINKER_SCRIPT}")
 
 set(PLATFORM_DIRECTORY platform/stm32f429-core)
-file(GLOB_RECURSE PLATFORM_SOURCES "${PLATFORM_DIRECTORY}/drivers/*.*" "${PLATFORM_DIRECTORY}/src/*.*" "${PLATFORM_DIRECTORY}/include/*.*")
+file(GLOB_RECURSE PLATFORM_SOURCES "${PLATFORM_DIRECTORY}/src/*.*" "${PLATFORM_DIRECTORY}/include/*.*")
+
+set(HAL_DEPENDENCIES cortex dma dma_ex flash flash_ex flash_ramfunc gpio hcd
+        i2c i2c_ex i2s i2s_ex pwr pwr_ex rcc rcc_ex spi tim tim_ex uart)
+
+string(REGEX REPLACE "([^;]+)" "stm32f4xx_hal_\\1.c" HAL_DEPENDENCIES "${HAL_DEPENDENCIES}")
+set(HAL_DEPENDENCIES ${HAL_DEPENDENCIES} stm32f4xx_hal.c stm32f4xx_ll_usb)
+string(REGEX REPLACE "([^;]+)" "${PLATFORM_DIRECTORY}/drivers/STM32F4xx_HAL_Driver/Src/\\1" HAL_DEPENDENCIES "${HAL_DEPENDENCIES}")
+set(PLATFORM_SOURCES ${PLATFORM_SOURCES} ${HAL_DEPENDENCIES})
+message("${PLATFORM_SOURCES}")
+
 set(SOURCES ${SOURCES} ${PLATFORM_SOURCES})
 
 include_directories(${PLATFORM_DIRECTORY}/drivers/STM32F4xx_HAL_Driver/Inc)
