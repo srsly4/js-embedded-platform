@@ -13,10 +13,7 @@ set(PLATFORM "none" CACHE STRING "Build target platform")
 
 include_directories(include)
 
-set(PLATFORM_DIRECTORY platform/${PLATFORM})
-file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.*" "include/*.*"
-     "${PLATFORM_DIRECTORY}/drivers/*.*" "${PLATFORM_DIRECTORY}/src/*.*" "${PLATFORM_DIRECTORY}/include/*.*")
-
+file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.*" "include/*.*")
 if (PLATFORM MATCHES "nucleo-f429zi")
     include(platform/${PLATFORM}/CMakeLists.txt)
 else()

@@ -18,6 +18,15 @@ set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS} -std=c++11")
 set(CMAKE_C_FLAGS_INIT "${COMMON_FLAGS} -std=gnu99")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,-gc-sections -T ${LINKER_SCRIPT}")
 
+set(PLATFORM_DIRECTORY platform/stm32f429-core)
+file(GLOB_RECURSE PLATFORM_SOURCES "${PLATFORM_DIRECTORY}/drivers/*.*" "${PLATFORM_DIRECTORY}/src/*.*" "${PLATFORM_DIRECTORY}/include/*.*")
+set(SOURCES ${SOURCES} ${PLATFORM_SOURCES})
+
+include_directories(${PLATFORM_DIRECTORY}/drivers/STM32F4xx_HAL_Driver/Inc)
+include_directories(${PLATFORM_DIRECTORY}/drivers/CMSIS/Include)
+include_directories(${PLATFORM_DIRECTORY}/drivers/CMSIS/Device/ST/STM32F4xx/Include)
+include_directories(${PLATFORM_DIRECTORY}/include)
+
 add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})
 target_link_libraries(${PROJECT_NAME}.elf c m)
 
