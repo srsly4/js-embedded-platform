@@ -3,7 +3,7 @@ set(CMAKE_C_COMPILER arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 set(AS arm-none-eabi-as)
 set(AR arm-none-eabi-ar)
-set(OBJCOPY arm-none-eabi-objcopy)
+set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
 set(OBJDUMP arm-none-eabi-objdump)
 set(SIZE arm-none-eabi-size)
 
@@ -11,7 +11,6 @@ add_definitions(-D__weak=__attribute__\(\(weak\)\) -D__packed=__attribute__\(\(_
 set(COMMON_FLAGS "-mcpu=cortex-m4 ${FPU_FLAGS} -mthumb -mthumb-interwork -ffunction-sections -fdata-sections -g -fno-common -fmessage-length=0 -specs=nosys.specs -specs=nano.specs")
 
 include_directories(include drivers/STM32F4xx_HAL_Driver/Inc)
-file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.*" "include/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/platform/stm32f429-core/flash.ld)
 
@@ -22,7 +21,7 @@ set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,-gc-sections -T ${LINKER_SCRIPT}")
 add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})
 target_link_libraries(${PROJECT_NAME}.elf c m)
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_INIT} -Wl,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map")
 
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
@@ -38,3 +37,5 @@ add_custom_target(UPLOAD
         -iex "monitor program $<TARGET_FILE:${PROJECT_NAME}.elf>"
         -iex "monitor reset init"
         -iex "disconnect" -iex "quit")
+
+add_custom_target(firmware DEPENDS ${PROJECT_NAME}.elf)

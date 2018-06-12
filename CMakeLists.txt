@@ -5,13 +5,17 @@ set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS} -std=c++11")
 set(CMAKE_C_FLAGS_INIT "${COMMON_FLAGS} -std=gnu99")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,-gc-sections -T ${LINKER_SCRIPT}")
 
+set(OUTPUT_DIRECTORY out/)
+
 project(js-embedded-platform C ASM)
 
 set(PLATFORM "none" CACHE STRING "Build target platform")
 
 include_directories(include)
 
-file(GLOB_RECURSE SOURCES "src/*.*")
+set(PLATFORM_DIRECTORY platform/${PLATFORM})
+file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.*" "include/*.*"
+     "${PLATFORM_DIRECTORY}/drivers/*.*" "${PLATFORM_DIRECTORY}/src/*.*" "${PLATFORM_DIRECTORY}/include/*.*")
 
 if (PLATFORM MATCHES "nucleo-f429zi")
     include(platform/${PLATFORM}/CMakeLists.txt)
