@@ -108,13 +108,6 @@ int main(void){
     SystemClock_Config();
     GPIO_Init();
 
-    while (1) {
-        platform_debug_led_on();
-        platform_sleep(250);
-        platform_debug_led_off();
-        platform_sleep(250);
-    }
-
     // run the platform-independent code
     entrypoint();
 }
