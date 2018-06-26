@@ -12,8 +12,6 @@ set(COMMON_FLAGS "-mcpu=cortex-m4 ${FPU_FLAGS} -mthumb -mthumb-interwork -ffunct
 
 include_directories(include drivers/STM32F4xx_HAL_Driver/Inc)
 
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/platform/stm32f429-core/flash.ld)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -std=c++11")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -std=gnu99")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,-gc-sections -T ${LINKER_SCRIPT}")
