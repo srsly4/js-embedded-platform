@@ -30,8 +30,8 @@ file(GLOB_RECURSE MIDDLEWARES_SOURCES
         "${PLATFORM_DIRECTORY}/middlewares/LwIP/system/OS/*.*"
         "${PLATFORM_DIRECTORY}/middlewares/mbedTLS/library/*.*")
 
-set(HAL_DEPENDENCIES cortex dma dma_ex flash flash_ex flash_ramfunc gpio hcd
-        i2c i2c_ex i2s i2s_ex pwr pwr_ex rcc rcc_ex spi tim tim_ex uart)
+set(HAL_DEPENDENCIES cortex dma dma_ex eth flash flash_ex flash_ramfunc gpio hcd
+        i2c i2c_ex i2s i2s_ex pcd pcd_ex pwr pwr_ex rcc rcc_ex spi tim tim_ex uart)
 
 string(REGEX REPLACE "([^;]+)" "stm32f4xx_hal_\\1.c" HAL_DEPENDENCIES "${HAL_DEPENDENCIES}")
 set(HAL_DEPENDENCIES ${HAL_DEPENDENCIES} stm32f4xx_hal.c stm32f4xx_ll_usb)

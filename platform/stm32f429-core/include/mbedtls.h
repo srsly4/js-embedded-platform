@@ -72,7 +72,7 @@ void MX_MBEDTLS_Init(void);
 /* USER CODE END 2 */
 
 #ifdef __cplusplus
-po0}
+}
 #endif
 #endif /*__mbedtls_H */
 

@@ -1,14 +1,10 @@
 /**
   ******************************************************************************
-  * @file    GPIO/GPIO_EXTI/Src/stm32f4xx_it.c
-  * @author  MCD Application Team
-  * @brief   Main Interrupt Service Routines.
-  *          This file provides template for all exceptions handler and
-  *          peripherals interrupt service routine.
+  * @file    stm32f4xx_it.c
+  * @brief   Interrupt Service Routines.
   ******************************************************************************
-  * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * COPYRIGHT(c) 2018 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -34,154 +30,75 @@
   *
   ******************************************************************************
   */
-
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_it.h"
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_it.h"
+#include "cmsis_os.h"
 
-/** @addtogroup STM32F4xx_HAL_Examples
-  * @{
-  */
+/* USER CODE BEGIN 0 */
 
-/** @addtogroup GPIO_EXTI
-  * @{
-  */
+/* USER CODE END 0 */
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* External variables --------------------------------------------------------*/
+extern ETH_HandleTypeDef heth;
 
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
+extern TIM_HandleTypeDef htim1;
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Exceptions Handlers                         */
+/*            Cortex-M4 Processor Interruption and Exception Handlers         */
 /******************************************************************************/
 
 /**
-  * @brief  This function handles NMI exception.
-  * @param  None
-  * @retval None
-  */
-void NMI_Handler(void)
-{
-}
-
-/**
-  * @brief  This function handles Hard Fault exception.
-  * @param  None
-  * @retval None
-  */
-void HardFault_Handler(void)
-{
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles Memory Manage exception.
-  * @param  None
-  * @retval None
-  */
-void MemManage_Handler(void)
-{
-  /* Go to infinite loop when Memory Manage exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles Bus Fault exception.
-  * @param  None
-  * @retval None
-  */
-void BusFault_Handler(void)
-{
-  /* Go to infinite loop when Bus Fault exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles Usage Fault exception.
-  * @param  None
-  * @retval None
-  */
-void UsageFault_Handler(void)
-{
-  /* Go to infinite loop when Usage Fault exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles SVCall exception.
-  * @param  None
-  * @retval None
-  */
-// overwritten by middlewares/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c
-//void SVC_Handler(void)
-//{
-//}
-
-/**
-  * @brief  This function handles Debug Monitor exception.
-  * @param  None
-  * @retval None
-  */
-void DebugMon_Handler(void)
-{
-}
-
-/**
-  * @brief  This function handles PendSVC exception.
-  * @param  None
-  * @retval None
-  */
-// overwritten by middlewares/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c
-//void PendSV_Handler(void)
-//{
-//}
-
-/**
-  * @brief  This function handles SysTick Handler.
-  * @param  None
-  * @retval None
-  */
+* @brief This function handles System tick timer.
+*/
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+
+  /* USER CODE END SysTick_IRQn 0 */
+  osSystickHandler();
+  /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  /* USER CODE END SysTick_IRQn 1 */
 }
 
 /******************************************************************************/
-/*                 STM32F4xx Peripherals Interrupt Handlers                   */
-/*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
-/*  available peripheral interrupt handler's name please refer to the startup */
-/*  file (startup_stm32f4xx.s).                                               */
+/* STM32F4xx Peripheral Interrupt Handlers                                    */
+/* Add here the Interrupt Handlers for the used peripherals.                  */
+/* For the available peripheral interrupt handler names,                      */
+/* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
 
 /**
-  * @brief  This function handles external line 15_10 interrupt request.
-  * @param  None
-  * @retval None
-  */
-void EXTI15_10_IRQHandler(void)
+* @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
+*/
+void TIM1_UP_TIM10_IRQHandler(void)
 {
-//  HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim1);
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
 }
 
 /**
-  * @}
-  */
+* @brief This function handles Ethernet global interrupt.
+*/
+void ETH_IRQHandler(void)
+{
+  /* USER CODE BEGIN ETH_IRQn 0 */
 
-/**
-  * @}
-  */
+  /* USER CODE END ETH_IRQn 0 */
+  HAL_ETH_IRQHandler(&heth);
+  /* USER CODE BEGIN ETH_IRQn 1 */
 
+  /* USER CODE END ETH_IRQn 1 */
+}
+
+/* USER CODE BEGIN 1 */
+
+/* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
