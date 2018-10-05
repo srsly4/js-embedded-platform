@@ -405,7 +405,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
       framelength = framelength + byteslefttocopy;
     }
   
-  /* Prepare transmit descriptors to give to DMA */ 
+  /* Prepare transmit descriptors to give to DMA */
   HAL_ETH_TransmitFrame(&heth, framelength);
   
   errval = ERR_OK;
