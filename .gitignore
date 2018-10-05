@@ -2,3 +2,10 @@ cmake-build-debug
 .idea
 CMakeCache.txt
 CMakeFiles
+Makefile
+js-embedded-platform.bin
+js-embedded-platform.cbp
+js-embedded-platform.elf
+js-embedded-platform.hex
+js-embedded-platform.map
+cmake_install.cmake
