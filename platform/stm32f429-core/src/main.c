@@ -125,8 +125,9 @@ void start_main_task(void const * argument) {
     mbedtls_net_init(NULL);
     for(;;) {
         platform_debug_led_on();
-        osDelay(500);
+        platform_sleep(500);
         platform_debug_led_off();
+        platform_sleep(500);
     }
 }
 
@@ -136,7 +137,7 @@ int main(void){
     GPIO_Init();
 
 
-    osThreadDef(mainTask, start_main_task, osPriorityNormal, 0, 128);
+    osThreadDef(mainTask, start_main_task, osPriorityNormal, 0, 256);
     mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
     osKernelStart();
