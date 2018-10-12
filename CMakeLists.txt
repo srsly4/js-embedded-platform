@@ -8,9 +8,11 @@ project(js-embedded-platform C ASM)
 
 set(PLATFORM "none" CACHE STRING "Build target platform")
 
+add_definitions(-DLWM2M_CLIENT_MODE -DLWM2M_SUPPORT_JSON)
+
 include_directories(include)
 
-file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.*" "include/*.*")
+file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.c" "include/*.*")
 if (PLATFORM MATCHES "nucleo-f429zi")
     include(platform/${PLATFORM}/CMakeLists.txt)
 else()
