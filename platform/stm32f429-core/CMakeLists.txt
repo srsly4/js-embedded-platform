@@ -8,6 +8,7 @@ set(CMAKE_OBJDUMP arm-none-eabi-objdump)
 set(CMAKE_SIZE arm-none-eabi-size)
 
 add_definitions(-D__weak=__attribute__\(\(weak\)\) -DMBEDTLS_CONFIG_FILE=\"mbedtls_config.h\" -D__packed=__attribute__\(\(__packed__\)\) -DUSE_HAL_DRIVER -DSTM32F407xx )
+add_definitions(-DLWM2M_LITTLE_ENDIAN -DLWM2M_EMBEDDED_MODE)
 
 set(FPU_FLAGS "-mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 set(COMMON_FLAGS "-mcpu=cortex-m4 ${FPU_FLAGS} -mthumb -ffunction-sections -fdata-sections -g -fno-common -fmessage-length=0 -specs=nosys.specs -specs=nano.specs")
