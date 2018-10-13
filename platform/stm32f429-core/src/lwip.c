@@ -79,10 +79,10 @@ ip4_addr_t gw;
 /**
   * LwIP initialization function
   */
-void MX_LWIP_Init(void)
+void MX_LWIP_Init(tcpip_init_done_fn done_fn)
 {
   /* Initilialize the LwIP stack with RTOS */
-  tcpip_init( NULL, NULL );
+  tcpip_init( done_fn, NULL );
 
   /* IP addresses initialization with DHCP (IPv4) */
   ipaddr.addr = 0;

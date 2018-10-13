@@ -77,7 +77,7 @@
 extern ETH_HandleTypeDef heth;
 
 /* LWIP init function */	
-void MX_LWIP_Init(void);
+void MX_LWIP_Init(tcpip_init_done_fn done_fn);
 
 #if !WITH_RTOS
 /* USER CODE BEGIN 1 */

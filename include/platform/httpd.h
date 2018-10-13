@@ -1,0 +1,6 @@
+#ifndef JS_EMBEDDED_PLATFORM_HTTPD_H
+#define JS_EMBEDDED_PLATFORM_HTTPD_H
+
+void httpd_init();
+
+#endif //JS_EMBEDDED_PLATFORM_HTTPD_H

@@ -1,6 +1,9 @@
+#include <platform/httpd.h>
+#include <platform/memory.h>
 #include "common.h"
 #include "duktape.h"
 #include "platform.h"
+#include <cmsis_os.h>
 
 static duk_ret_t native_sleep(duk_context *ctx) {
     duk_int32_t ms = duk_to_int32(ctx, 0);
@@ -18,9 +21,48 @@ static duk_ret_t native_led_off(duk_context *ctx) {
     return 0;
 }
 
+static void* _duk_alloc(void *udata, size_t size) {
+    return malloc(size);
+}
+
+static void _duk_free(void *udata, void *ptr) {
+    return free(ptr);
+}
+
+static void* _duk_realloc(void *udata, void *ptr, size_t size) {
+    return realloc(ptr, size);
+}
+
+static void duk_fatal_handler(void *udata, const char *msg) {
+    platform_debug_led_off();
+}
+
 void entrypoint(void){
 
-    duk_context *ctx = duk_create_heap_default();
+    const char testcode[] = "(function(){"
+            "var timeTest = 100;"
+            "while(true){"
+            "ledOn();"
+            "sleep(timeTest);"
+            "ledOff();"
+            "sleep(timeTest);"
+            "timeTest += 100;"
+            "if (timeTest > 1000) { timeTest = 100; }"
+            "}"
+            "})()";
+
+//    httpd_init();
+
+    duk_context *ctx = duk_create_heap(
+            _duk_alloc,
+            _duk_realloc,
+            _duk_free,
+            NULL,
+            duk_fatal_handler
+    );
+
+
+
     duk_push_c_function(ctx, native_sleep, 1 /*nargs*/);
     duk_put_global_string(ctx, "sleep");
 
@@ -30,15 +72,9 @@ void entrypoint(void){
     duk_push_c_function(ctx, native_led_off, 0);
     duk_put_global_string(ctx, "ledOff");
 
-    duk_eval_string(ctx, "(function(){"
-            "var timeTest = 100;"
-            "while(true){"
-            "ledOn();"
-            "sleep(timeTest);"
-            "ledOff();"
-            "sleep(timeTest);"
-            "}"
-            "})()");
+    size_t freemem = xPortGetFreeHeapSize();
+
+    duk_eval_string(ctx, testcode);
 
     duk_destroy_heap(ctx);
 

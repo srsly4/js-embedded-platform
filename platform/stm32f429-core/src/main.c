@@ -2,6 +2,8 @@
 #include <mbedtls/net_sockets.h>
 #include <lwip/udp.h>
 #include <string.h>
+#include <lwip/tcpip.h>
+#include <lwip.h>
 #include "common.h"
 #include "stm32f4xx_hal.h"
 #include "platform.h"
@@ -221,20 +223,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void start_main_task(void const * argument) {
     char msg[] = "Hello world!\n\0";
     // argument is useless anyway now
-    mbedtls_net_init(NULL);
     err_t err;
-    struct udp_pcb* test_pcb = udp_new();
-    err = udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
+
+    size_t freeHeap = xPortGetFreeHeapSize();
+
+    entrypoint();
+
+//    struct udp_pcb* test_pcb = udp_new();
+//    err = udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
     for(;;) {
         platform_debug_led_on();
         osDelay(500);
         platform_debug_led_off();
         osDelay(500);
-        struct pbuf *buf = pbuf_alloc(PBUF_TRANSPORT, sizeof(msg), PBUF_RAM);
-        memcpy(buf->payload, msg, sizeof(msg));
-        err = udp_sendto(test_pcb, buf, IP4_ADDR_BROADCAST, 9998);
+//        struct pbuf *buf = pbuf_alloc(PBUF_TRANSPORT, sizeof(msg), PBUF_RAM);
+//        memcpy(buf->payload, msg, sizeof(msg));
+//        err = udp_sendto(test_pcb, buf, IP4_ADDR_BROADCAST, 9998);
 //        err = netif_default->linkoutput(netif_default, buf);
-        pbuf_free(buf);
+//        pbuf_free(buf);
     }
 }
 
@@ -243,8 +249,7 @@ int main(void){
     SystemClock_Config();
     GPIO_Init();
 
-
-    osThreadDef(mainTask, start_main_task, osPriorityNormal, 0, 256);
+    osThreadDef(mainTask, start_main_task, osPriorityHigh, 0, 4096);
     mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
     osKernelStart();
@@ -254,7 +259,7 @@ int main(void){
 }
 
 void platform_sleep(uint32_t ms) {
-    HAL_Delay(ms);
+    osDelay(ms);
 }
 
 void platform_debug_led_on() {
