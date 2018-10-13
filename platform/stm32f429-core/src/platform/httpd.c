@@ -6,7 +6,7 @@
 
 osThreadId httpdTaskHandle;
 
-#define HTTPD_CLIENT_BUFF_LENGTH 1024
+#define HTTPD_CLIENT_BUFF_LENGTH 256
 
 static char *defaultResponse =
         "<html><head><title>Js embedded platform</title></head>"
