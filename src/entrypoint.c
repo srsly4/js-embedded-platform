@@ -51,8 +51,6 @@ void entrypoint(void){
             "}"
             "})()";
 
-//    httpd_init();
-
     duk_context *ctx = duk_create_heap(
             _duk_alloc,
             _duk_realloc,

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <lwip/tcpip.h>
 #include <lwip.h>
+#include <platform/httpd.h>
 #include "common.h"
 #include "stm32f4xx_hal.h"
 #include "platform.h"
@@ -219,11 +220,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 }
 
+void tcpip_init_callback(void *args) {
+    httpd_init();
+}
 
 void start_main_task(void const * argument) {
     char msg[] = "Hello world!\n\0";
     // argument is useless anyway now
+    MX_LWIP_Init(tcpip_init_callback);
     err_t err;
+
 
     size_t freeHeap = xPortGetFreeHeapSize();
 

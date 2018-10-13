@@ -93,6 +93,7 @@
     extern uint32_t SystemCoreClock;
 #endif
 
+#define configCHECK_FOR_STACK_OVERFLOW           0
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          0
 #define configSUPPORT_DYNAMIC_ALLOCATION         1
