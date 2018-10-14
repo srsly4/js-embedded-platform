@@ -1,0 +1,6 @@
+#ifndef JS_EMBEDDED_PLATFORM_LWM2MD_H
+#define JS_EMBEDDED_PLATFORM_LWM2MD_H
+
+void lwm2md_init(void);
+
+#endif //JS_EMBEDDED_PLATFORM_LWM2MD_H

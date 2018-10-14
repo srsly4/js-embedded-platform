@@ -87,8 +87,6 @@ void httpd_task(const void* argument) {
     } while (accepted_socket_id >= 0);
 
     err = lwip_close(socket_fd);
-
-
 }
 
 

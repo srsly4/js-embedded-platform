@@ -81,7 +81,7 @@
 int g_reboot = 0;
 static int g_quit = 0;
 
-#define OBJ_COUNT 2
+#define OBJ_COUNT 4
 lwm2m_object_t * objArray[OBJ_COUNT];
 
 typedef struct
@@ -121,7 +121,6 @@ void handle_value_changed(lwm2m_context_t * lwm2mH,
             dataP = lwm2m_data_new(1);
             if (dataP == NULL)
             {
-                fprintf(stderr, "Internal allocation failure !\n");
                 return;
             }
             dataP->id = uri->resourceId;
@@ -131,11 +130,9 @@ void handle_value_changed(lwm2m_context_t * lwm2mH,
 
             if (COAP_204_CHANGED != result)
             {
-                fprintf(stderr, "Failed to change value!\n");
             }
             else
             {
-                fprintf(stderr, "value changed!\n");
                 lwm2m_resource_value_changed(lwm2mH, uri);
             }
             lwm2m_data_free(1, dataP);
@@ -143,13 +140,11 @@ void handle_value_changed(lwm2m_context_t * lwm2mH,
         }
         else
         {
-            fprintf(stderr, "write not supported for specified resource!\n");
         }
         return;
     }
     else
     {
-        fprintf(stderr, "Object not found !\n");
     }
 }
 
@@ -219,10 +214,8 @@ void * lwm2m_connect_server(uint16_t secObjInstID,
     *port = 0;
     port++;
 
-    fprintf(stderr, "Opening connection to server at %s:%s\r\n", host, port);
     newConnP = connection_create(dataP->connList, dataP->sock, host, port, dataP->addressFamily);
     if (newConnP == NULL) {
-        fprintf(stderr, "Connection creation failed.\r\n");
     }
     else {
         dataP->connList = newConnP;
@@ -283,9 +276,9 @@ int init_lwm2m_server()
     int result;
     lwm2m_context_t * lwm2mH = NULL;
     const char * localPort = "56830";
-    const char * server = NULL;
+    const char * server = "192.168.70.1";
     const char * serverPort = LWM2M_STANDARD_PORT_STR;
-    char * name = "testlwm2mclient";
+    char * name = "jsembedded";
     time_t reboot_time = 0;
 
 
@@ -305,11 +298,9 @@ int init_lwm2m_server()
     /*
      *This call an internal function that create an IPV6 socket on the port 5683.
      */
-    fprintf(stderr, "Trying to bind LWM2M Client to port %s\r\n", localPort);
     data.sock = create_socket(localPort, data.addressFamily);
     if (data.sock < 0)
     {
-        fprintf(stderr, "Failed to open socket: %d %s\r\n", errno, strerror(errno));
         return -1;
     }
 
@@ -359,15 +350,25 @@ int init_lwm2m_server()
     objArray[0] = get_security_object(serverId, serverUri, pskId, pskBuffer, pskLen, false);
     if (NULL == objArray[0])
     {
-        fprintf(stderr, "Failed to create security object\r\n");
         return -1;
     }
     data.securityObjP = objArray[0];
 
-    objArray[1] = get_object_firmware();
+    objArray[1] = get_server_object(serverId, "U", 300, false);
     if (NULL == objArray[1])
     {
-        fprintf(stderr, "Failed to create Firmware object\r\n");
+        return -1;
+    }
+
+    objArray[2] = get_object_device();
+    if (NULL == objArray[2])
+    {
+        return -1;
+    }
+
+    objArray[3] = get_object_firmware();
+    if (NULL == objArray[1])
+    {
         return -1;
     }
 
@@ -378,7 +379,6 @@ int init_lwm2m_server()
     lwm2mH = lwm2m_init(&data);
     if (NULL == lwm2mH)
     {
-        fprintf(stderr, "lwm2m_init() failed\r\n");
         return -1;
     }
 
@@ -393,11 +393,10 @@ int init_lwm2m_server()
     result = lwm2m_configure(lwm2mH, name, NULL, NULL, OBJ_COUNT, objArray);
     if (result != 0)
     {
-        fprintf(stderr, "lwm2m_configure() failed: 0x%X\r\n", result);
         return -1;
     }
 
-    signal(SIGINT, handle_sigint);
+//    signal(SIGINT, handle_sigint);
 
     /**
      * Initialize value changed callback.
@@ -408,40 +407,35 @@ int init_lwm2m_server()
      * As you now have your lwm2m context complete you can pass it as an argument to all the command line functions
      * precedently viewed (first point)
      */
-    fprintf(stdout, "LWM2M Client \"%s\" started on port %s\r\n", name, localPort);
-    fprintf(stdout, "> "); fflush(stdout);
-    /*
-     * We now enter in a while loop that will handle the communications from the server
-     */
     while (0 == g_quit)
     {
         struct timeval tv;
         fd_set readfds;
 
-        if (g_reboot)
-        {
-            time_t tv_sec;
-
-            tv_sec = lwm2m_gettime();
-
-            if (0 == reboot_time)
-            {
-                reboot_time = tv_sec + 5;
-            }
-            if (reboot_time < tv_sec)
-            {
-                /*
-                 * Message should normally be lost with reboot ...
-                 */
-                fprintf(stderr, "reboot time expired, rebooting ...");
-                system_reboot();
-            }
-            else
-            {
-                tv.tv_sec = reboot_time - tv_sec;
-            }
-        }
-        else
+//        if (g_reboot)
+//        {
+//            time_t tv_sec;
+//
+//            tv_sec = lwm2m_gettime();
+//
+//            if (0 == reboot_time)
+//            {
+//                reboot_time = tv_sec + 5;
+//            }
+//            if (reboot_time < tv_sec)
+//            {
+//                /*
+//                 * Message should normally be lost with reboot ...
+//                 */
+//                fprintf(stderr, "reboot time expired, rebooting ...");
+//                system_reboot();
+//            }
+//            else
+//            {
+//                tv.tv_sec = reboot_time - tv_sec;
+//            }
+//        }
+//        else
         {
             tv.tv_sec = 60;
         }
@@ -457,31 +451,8 @@ int init_lwm2m_server()
          *    (eg. retransmission) and the time between the next operation
          */
         result = lwm2m_step(lwm2mH, &(tv.tv_sec));
-        fprintf(stdout, " -> State: ");
-        switch (lwm2mH->state)
-        {
-        case STATE_INITIAL:
-            fprintf(stdout, "STATE_INITIAL\r\n");
-            break;
-        case STATE_REGISTER_REQUIRED:
-            fprintf(stdout, "STATE_REGISTER_REQUIRED\r\n");
-            break;
-        case STATE_REGISTERING:
-            fprintf(stdout, "STATE_REGISTERING\r\n");
-            break;
-        case STATE_READY:
-            fprintf(stdout, "STATE_READY\r\n");
-            break;
-        default:
-            fprintf(stdout, "Unknown...\r\n");
-            break;
-        }
         if (result != 0)
         {
-            fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
-#ifdef WITH_LOGS
-                fprintf(stdout, "[BOOTSTRAP] restore security and server objects\r\n");
-#endif
             return -1;
         }
         /*
@@ -494,7 +465,6 @@ int init_lwm2m_server()
         {
             if (errno != EINTR)
             {
-              fprintf(stderr, "Error in select(): %d %s\r\n", errno, strerror(errno));
             }
         }
         else if (result > 0)
@@ -519,7 +489,6 @@ int init_lwm2m_server()
 
                 if (0 > numBytes)
                 {
-                    fprintf(stderr, "Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
                 }
                 else if (0 < numBytes)
                 {
@@ -537,7 +506,6 @@ int init_lwm2m_server()
                         inet_ntop(saddr->sin_family, &saddr->sin_addr, s, INET_ADDRSTRLEN);
                         port = saddr->sin_port;
                     }
-                    fprintf(stderr, "%d bytes received from [%s]:%hu\r\n", numBytes, s, ntohs(port));
 
 
                     connP = connection_find(data.connList, &addr, addrLen);
@@ -558,7 +526,6 @@ int init_lwm2m_server()
                     }
                     else
                     {
-                        fprintf(stderr, "received bytes ignored!\r\n");
                     }
                 }
             }

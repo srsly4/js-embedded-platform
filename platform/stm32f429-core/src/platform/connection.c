@@ -15,10 +15,10 @@
  *    Pascal Rieux - Please refer to git log
  *    
  *******************************************************************************/
-
-#include <stdlib.h>
+#include <platform/memory.h>
+#include <posix/sys/socket.h>
 #include <string.h>
-#include <ctype.h>
+#include <lwip/mem.h>
 #include "platform/connection.h"
 
 // from commandline.c
@@ -140,7 +140,7 @@ connection_t * connection_create(connection_t * connList,
         close(s);
     }
     if (NULL != servinfo) {
-        free(servinfo);
+        mem_free(servinfo);
     }
 
     return connP;

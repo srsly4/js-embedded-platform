@@ -5,6 +5,7 @@
 #include <lwip/tcpip.h>
 #include <lwip.h>
 #include <platform/httpd.h>
+#include <platform/lwm2md.h>
 #include "common.h"
 #include "stm32f4xx_hal.h"
 #include "platform.h"
@@ -220,8 +221,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 }
 
+void start_lwm2m_task(void const *args) {
+
+}
+
 void tcpip_init_callback(void *args) {
     httpd_init();
+    lwm2md_init();
 }
 
 void start_main_task(void const * argument) {

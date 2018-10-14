@@ -70,8 +70,6 @@ void entrypoint(void){
     duk_push_c_function(ctx, native_led_off, 0);
     duk_put_global_string(ctx, "ledOff");
 
-    size_t freemem = xPortGetFreeHeapSize();
-
     duk_eval_string(ctx, testcode);
 
     duk_destroy_heap(ctx);

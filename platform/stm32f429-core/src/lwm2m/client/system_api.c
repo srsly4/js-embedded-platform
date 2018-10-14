@@ -46,7 +46,7 @@ static void prv_value_change(void* context,
 
 void init_value_change(lwm2m_context_t * lwm2m)
 {
-    system_setValueChangedHandler(lwm2m, prv_value_change);
+//    system_setValueChangedHandler(lwm2m, prv_value_change);
 }
 
 #else

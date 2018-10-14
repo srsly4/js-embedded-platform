@@ -15,11 +15,9 @@
  *******************************************************************************/
 
 #include <lwm2m/core/liblwm2m.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <sys/time.h>
+#include <platform/memory.h>
 
 #ifndef LWM2M_MEMORY_TRACE
 
@@ -35,7 +33,10 @@ void lwm2m_free(void * p)
 
 char * lwm2m_strdup(const char * str)
 {
-    return strdup(str);
+    size_t length = strlen(str) + 1;
+    char *new = malloc(length);
+    memcpy(new, str, length);
+    return new;
 }
 
 #endif
@@ -61,11 +62,4 @@ time_t lwm2m_gettime(void)
 
 void lwm2m_printf(const char * format, ...)
 {
-    va_list ap;
-
-    va_start(ap, format);
-
-    vfprintf(stderr, format, ap);
-
-    va_end(ap);
 }

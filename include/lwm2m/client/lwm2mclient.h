@@ -32,6 +32,22 @@
 extern int g_reboot;
 
 /*
+ * object_server.c
+ */
+lwm2m_object_t * get_server_object(int serverId, const char* binding, int lifetime, bool storing);
+void clean_server_object(lwm2m_object_t * object);
+void display_server_object(lwm2m_object_t * objectP);
+void copy_server_object(lwm2m_object_t * objectDest, lwm2m_object_t * objectSrc);
+
+/*
+ * object_device.c
+ */
+lwm2m_object_t * get_object_device(void);
+void free_object_device(lwm2m_object_t * objectP);
+uint8_t device_change(lwm2m_data_t * dataArray, lwm2m_object_t * objectP);
+void display_device_object(lwm2m_object_t * objectP);
+
+/*
  * object_firmware.c
  */
 lwm2m_object_t * get_object_firmware(void);
