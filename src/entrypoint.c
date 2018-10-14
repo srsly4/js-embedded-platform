@@ -1,5 +1,6 @@
 #include <platform/httpd.h>
 #include <platform/memory.h>
+#include <platform/eventloop.h>
 #include "common.h"
 #include "duktape.h"
 #include "platform.h"
@@ -37,29 +38,31 @@ static void duk_fatal_handler(void *udata, const char *msg) {
     platform_debug_led_off();
 }
 
-void entrypoint(void){
+static duk_context *ctx = NULL;
+static char *code_ptr = NULL;
+static const char test_code[] = "(function(){"
+        "var timeTest = 100;"
+        "while(true){"
+        "ledOn();"
+        "sleep(timeTest);"
+        "ledOff();"
+        "sleep(timeTest);"
+        "timeTest += 100;"
+        "if (timeTest > 1000) { timeTest = 100; }"
+        "}"
+        "})()";
 
-    const char testcode[] = "(function(){"
-            "var timeTest = 100;"
-            "while(true){"
-            "ledOn();"
-            "sleep(timeTest);"
-            "ledOff();"
-            "sleep(timeTest);"
-            "timeTest += 100;"
-            "if (timeTest > 1000) { timeTest = 100; }"
-            "}"
-            "})()";
+// fixme: this is only a mock of event loop
+void eventloop() {
+    clear_eventloop();
 
-    duk_context *ctx = duk_create_heap(
+    ctx = duk_create_heap(
             _duk_alloc,
             _duk_realloc,
             _duk_free,
             NULL,
             duk_fatal_handler
     );
-
-
 
     duk_push_c_function(ctx, native_sleep, 1 /*nargs*/);
     duk_put_global_string(ctx, "sleep");
@@ -70,8 +73,28 @@ void entrypoint(void){
     duk_push_c_function(ctx, native_led_off, 0);
     duk_put_global_string(ctx, "ledOff");
 
-    duk_eval_string(ctx, testcode);
+    duk_eval_string(ctx, code_ptr);
+}
 
-    duk_destroy_heap(ctx);
+void set_user_code(char* code) {
+    code_ptr = code;
+}
 
+char* get_user_code() {
+    return code_ptr;
+}
+
+void clear_eventloop() {
+    if (ctx != NULL) {
+        duk_destroy_heap(ctx);
+        ctx = NULL;
+    }
+}
+
+void entrypoint(void){
+    // if there is no code, load default's
+    if (code_ptr == NULL) {
+        code_ptr = (char *) test_code;
+    }
+    start_eventloop_thread();
 }

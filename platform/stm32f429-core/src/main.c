@@ -231,7 +231,7 @@ void tcpip_init_callback(void *args) {
 }
 
 void start_main_task(void const * argument) {
-    char msg[] = "Hello world!\n\0";
+    char msg[] = "Hello there!\n\0";
     // argument is useless anyway now
     MX_LWIP_Init(tcpip_init_callback);
     err_t err;
@@ -241,18 +241,14 @@ void start_main_task(void const * argument) {
 
     entrypoint();
 
-//    struct udp_pcb* test_pcb = udp_new();
-//    err = udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
+    struct udp_pcb* test_pcb = udp_new();
+    err = udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
     for(;;) {
-        platform_debug_led_on();
-        osDelay(500);
-        platform_debug_led_off();
-        osDelay(500);
-//        struct pbuf *buf = pbuf_alloc(PBUF_TRANSPORT, sizeof(msg), PBUF_RAM);
-//        memcpy(buf->payload, msg, sizeof(msg));
-//        err = udp_sendto(test_pcb, buf, IP4_ADDR_BROADCAST, 9998);
-//        err = netif_default->linkoutput(netif_default, buf);
-//        pbuf_free(buf);
+        osDelay(5000);
+        struct pbuf *buf = pbuf_alloc(PBUF_TRANSPORT, sizeof(msg), PBUF_RAM);
+        memcpy(buf->payload, msg, sizeof(msg));
+        err = udp_sendto(test_pcb, buf, IP4_ADDR_BROADCAST, 9998);
+        pbuf_free(buf);
     }
 }
 
@@ -261,7 +257,7 @@ int main(void){
     SystemClock_Config();
     GPIO_Init();
 
-    osThreadDef(mainTask, start_main_task, osPriorityHigh, 0, 4096);
+    osThreadDef(mainTask, start_main_task, osPriorityHigh, 0, 1024);
     mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
     osKernelStart();
