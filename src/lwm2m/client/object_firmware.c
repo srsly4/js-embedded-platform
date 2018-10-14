@@ -45,6 +45,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <lwm2m/core/liblwm2m.h>
+#include <platform/eventloop.h>
+#include <common.h>
 
 // ---- private object "Firmware" specific defines ----
 // Resource Id's:
@@ -201,7 +203,7 @@ static uint8_t prv_firmware_write(uint16_t instanceId,
                 firmware_push_buffer.size = dataArray[i].value.asBuffer.length;
                 package_buff = dataArray[i].value.asBuffer.buffer;
                 firmware_push_buffer.code = lwm2m_malloc(firmware_push_buffer.size);
-
+                memcpy(firmware_push_buffer.code, package_buff, firmware_push_buffer.size);
                 result = COAP_204_CHANGED;
                 break;
 
@@ -237,10 +239,13 @@ static uint8_t prv_firmware_execute(uint16_t instanceId,
     // for execute callback, resId is always set.
     switch (resourceId) {
         case RES_M_UPDATE:
-            if (data->state == 1) {
-                fprintf(stdout, "\n\t FIRMWARE UPDATE\r\n\n");
+            if (data->state == 1 && firmware_push_buffer.size != 0) {
                 // trigger your firmware download and update logic
                 data->state = 2;
+                kill_eventloop_thread();
+                set_user_code(firmware_push_buffer.code);
+                start_eventloop_thread();
+                data->state = 1;
                 return COAP_204_CHANGED;
             } else {
                 // firmware update already running
