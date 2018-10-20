@@ -4,7 +4,6 @@
 #include "common.h"
 #include "duktape.h"
 #include "platform.h"
-#include <cmsis_os.h>
 
 static duk_ret_t native_sleep(duk_context *ctx) {
     duk_int32_t ms = duk_to_int32(ctx, 0);

@@ -16,11 +16,9 @@
  *    
  *******************************************************************************/
 #include <platform/memory.h>
-#include <posix/sys/socket.h>
+#include <sys/socket.h>
 #include <string.h>
-#include <lwip/mem.h>
 #include "platform/connection.h"
-
 
 int create_socket(const char * portStr, int addressFamily)
 {
@@ -138,7 +136,7 @@ connection_t * connection_create(connection_t * connList,
         close(s);
     }
     if (NULL != servinfo) {
-        mem_free(servinfo);
+        free(servinfo);
     }
 
     return connP;
@@ -161,7 +159,7 @@ int connection_send(connection_t *connP,
                     uint8_t * buffer,
                     size_t length)
 {
-    int nbSent;
+    ssize_t nbSent;
     size_t offset;
 
 #ifdef WITH_LOGS
@@ -191,7 +189,7 @@ int connection_send(connection_t *connP,
     offset = 0;
     while (offset != length)
     {
-        nbSent = sendto(connP->sock, buffer + offset, length - offset, 0, (struct sockaddr *)&(connP->addr), connP->addrLen);
+        nbSent = sendto(connP->sock, buffer + offset, length - offset, 0, &(connP->addr), (socklen_t) connP->addrLen);
         if (nbSent == -1) return -1;
         offset += nbSent;
     }
