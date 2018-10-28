@@ -10,6 +10,7 @@ before_install:
 
 env:
  - TARGET_PLATFORM=nucleo-f429zi
+ - TARGET_PLATFORM=unix
 
 script:
   - bash ./.travis/platform-build.sh
