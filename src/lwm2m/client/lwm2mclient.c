@@ -67,12 +67,8 @@
 #include <ctype.h>
 #include <sys/select.h>
 #include <sys/types.h>
-#include <lwip/sockets.h>
-#include <lwip/inet.h>
-#include <lwip/netdb.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <signal.h>
 
 #define MAX_PACKET_SIZE 1024
 #define DEFAULT_SERVER_IPV6 "[::1]"
@@ -98,11 +94,6 @@ typedef struct
     int addressFamily;
 } client_data_t;
 
-
-void handle_sigint(int signum)
-{
-    g_quit = 2;
-}
 
 void handle_value_changed(lwm2m_context_t * lwm2mH,
                           lwm2m_uri_t * uri,
@@ -279,11 +270,8 @@ int init_lwm2m_server()
     const char * server = "192.168.70.1";
     const char * serverPort = LWM2M_STANDARD_PORT_STR;
     char * name = "jsembedded";
-    time_t reboot_time = 0;
-
 
     char * pskId = NULL;
-    char * psk = NULL;
     uint16_t pskLen = -1;
     char * pskBuffer = NULL;
 
@@ -396,8 +384,6 @@ int init_lwm2m_server()
         return -1;
     }
 
-//    signal(SIGINT, handle_sigint);
-
     /**
      * Initialize value changed callback.
      */
@@ -493,7 +479,6 @@ int init_lwm2m_server()
                 else if (0 < numBytes)
                 {
                     char s[INET_ADDRSTRLEN];
-                    in_port_t port;
 
 #ifdef WITH_TINYDTLS
                     dtls_connection_t * connP;
@@ -504,7 +489,6 @@ int init_lwm2m_server()
                     {
                         struct sockaddr_in *saddr = (struct sockaddr_in *)&addr;
                         inet_ntop(saddr->sin_family, &saddr->sin_addr, s, INET_ADDRSTRLEN);
-                        port = saddr->sin_port;
                     }
 
 
