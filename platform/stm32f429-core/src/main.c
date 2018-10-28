@@ -252,6 +252,16 @@ void start_main_task(void const * argument) {
     }
 }
 
+void vApplicationStackOverflowHook( TaskHandle_t xTask,
+                                    signed char *pcTaskName ) {
+    for (;;) {
+        platform_debug_led_on();
+        HAL_Delay(150);
+        platform_debug_led_off();
+        HAL_Delay(150);
+    }
+}
+
 int main(void){
     HAL_Init();
     SystemClock_Config();
