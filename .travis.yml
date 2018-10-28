@@ -1,8 +1,11 @@
+sudo: false
+dist: trusty
 language: c
 addons:
   apt:
     sources:
       - george-edison55-precise-backports
+      - team-gcc-arm-embedded
     packages:
       - cmake-data
       - cmake
