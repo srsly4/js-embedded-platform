@@ -1,0 +1,17 @@
+language: c
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+      - debian-sid
+    packages:
+      - cmake-data
+      - cmake
+      - gcc-arm-none-eabi
+      - libnewlib-arm-none-eabi
+
+env:
+ - TARGET_PLATFORM=nucleo-f429zi
+
+script:
+  - bash ./.travis/platform-build.sh
