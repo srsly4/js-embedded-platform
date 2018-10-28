@@ -1,13 +1,12 @@
 sudo: false
 dist: trusty
 language: c
-addons:
-  apt:
-    sources:
-      - sourceline: ppa:team-gcc-arm-embedded/ppa
-    update: true
-    packages:
-      - gcc-arm-none-eabi
+
+before_install:
+  - sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
+  - sudo apt-get update
+  - sudo apt-cache madison gcc-arm-none-eabi
+  - sudo apt-get install gcc-arm-none-eabi
 
 env:
  - TARGET_PLATFORM=nucleo-f429zi
