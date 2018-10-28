@@ -9,7 +9,7 @@ addons:
     packages:
       - cmake-data
       - cmake
-      - gcc-arm-none-eabi=7-2018q2-1~trusty1
+      - gcc-arm-none-eabi=7-2018q2-1
     update: true
 
 env:
