@@ -10,6 +10,7 @@ addons:
       - cmake-data
       - cmake
       - gcc-arm-none-eabi
+    update: true
 
 env:
  - TARGET_PLATFORM=nucleo-f429zi
