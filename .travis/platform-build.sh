@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-./cmake.sh . -DPLATFORM="$TARGET_PLATFORM"
+cmake . -DPLATFORM="$TARGET_PLATFORM"
 make
