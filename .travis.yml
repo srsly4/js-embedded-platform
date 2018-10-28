@@ -4,11 +4,8 @@ language: c
 addons:
   apt:
     sources:
-      - george-edison55-precise-backports
       - sourceline: ppa:team-gcc-arm-embedded/ppa
     packages:
-      - cmake-data
-      - cmake
       - gcc-arm-none-eabi=7-2018q2-1
     update: true
 
