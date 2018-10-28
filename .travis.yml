@@ -5,14 +5,11 @@ addons:
   apt:
     sources:
       - george-edison55-precise-backports
-      - team-gcc-arm-embedded
+      - sourceline: ppa:team-gcc-arm-embedded/ppa
     packages:
       - cmake-data
       - cmake
       - gcc-arm-none-eabi
-      - libnewlib-arm-none-eabi
-      - binutils-arm-none-eabi
-      - gdb-arm-none-eabi
 
 env:
  - TARGET_PLATFORM=nucleo-f429zi
