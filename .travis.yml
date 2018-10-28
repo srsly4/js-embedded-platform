@@ -3,7 +3,6 @@ addons:
   apt:
     sources:
       - george-edison55-precise-backports
-      - debian-sid
     packages:
       - cmake-data
       - cmake
