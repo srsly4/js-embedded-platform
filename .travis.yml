@@ -7,7 +7,7 @@ addons:
       - sourceline: ppa:team-gcc-arm-embedded/ppa
     update: true
     packages:
-      - gcc-arm-none-eabi=7-2018q2-1
+      - gcc-arm-none-eabi
 
 env:
  - TARGET_PLATFORM=nucleo-f429zi
