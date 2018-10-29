@@ -3,6 +3,7 @@
 #include <common.h>
 #include <cmsis_os.h>
 #include <eventloop.h>
+#include <platform/module.h>
 
 struct timer_item_struct_t ;
 typedef struct timer_item_struct_t timer_item_t;
@@ -60,8 +61,10 @@ callback_t* eventloop_platform_queue_receive() {
     return &_received_callback;
 }
 
-void _timer_cleanup(timer_item_t *timer) {
-    xTimerDelete(timer->timer, 0);
+module_ret_t _timer_cleanup(timer_item_t *timer) {
+    if (xTimerDelete(timer->timer, 0) == pdFAIL) {
+        return ERR_MODULE_TIMEOUT;
+    }
     eventloop_callback_destroy(timer->callback);
 
     // delete timer from linked list
@@ -72,7 +75,7 @@ void _timer_cleanup(timer_item_t *timer) {
         timer->next->prev = timer->prev;
     }
 
-    free(timer);
+    vPortFree(timer);
 }
 void _timer_callback_completion(callback_t *callback) {
     if (!callback->user_data) {
@@ -95,20 +98,24 @@ void eventloop_platform_timers_cleanup() {
 
 }
 
-void eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool_t repeat) {
+module_ret_t eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool_t repeat) {
     if (!repeat) { // destroy callback after first trigger
         callback->completion_handler = _timer_callback_completion;
     }
     TimerHandle_t timer = xTimerCreate(
             "setTimeout", pdMS_TO_TICKS(timeout), repeat ? pdTRUE : pdFALSE, 0, _timer_trigger);
     if (!timer) {
-        return;
+        return ERR_MODULE_MEM;
     }
 
-    timer_item_t *timer_item = malloc(sizeof(timer_item_t));
+    timer_item_t *timer_item = pvPortMalloc(sizeof(timer_item_t));
+    if (!timer_item) {
+        return ERR_MODULE_MEM;
+    }
+
     timer_item->timer = timer;
     timer_item->callback = callback;
-    timer_item->repeat;
+    timer_item->repeat = repeat;
     timer_item->prev = NULL;
     timer_item->next = NULL;
 
@@ -124,13 +131,18 @@ void eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool
     vTimerSetTimerID(timer, timer_item); // timerId is used to store timer_item ptr
     callback->user_data = timer_item;
 
-    xTimerStart(timer, 0);
+    if (xTimerStart(timer, 0) == pdFAIL) {
+        return ERR_MODULE_TIMEOUT;
+    }
+    return ERR_MODULE_SUCC;
 }
 
-void eventloop_platform_timer_stop(callback_t *callback) {
+module_ret_t eventloop_platform_timer_stop(callback_t *callback) {
     if (callback->user_data) {
         timer_item_t *timer = callback->user_data;
-        xTimerStop(timer->timer, 0);
+        if (xTimerStop(timer->timer, 0) == pdFAIL) {
+            return ERR_MODULE_TIMEOUT;
+        }
         _timer_cleanup(timer);
     }
 }

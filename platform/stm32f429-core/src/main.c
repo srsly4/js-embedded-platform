@@ -6,6 +6,7 @@
 #include <lwip.h>
 #include <platform/httpd.h>
 #include <platform/lwm2md.h>
+#include <platform/debug.h>
 #include "common.h"
 #include "stm32f4xx_hal.h"
 #include "platform.h"
@@ -255,10 +256,13 @@ void start_main_task(void const * argument) {
 void vApplicationStackOverflowHook( TaskHandle_t xTask,
                                     signed char *pcTaskName ) {
     for (;;) {
-        platform_debug_led_on();
-        HAL_Delay(150);
-        platform_debug_led_off();
-        HAL_Delay(150);
+        for (int i = 5; i--;) {
+            debug_platform_error_led_on();
+            HAL_Delay(250);
+            debug_platform_error_led_off();
+            HAL_Delay(250);
+        }
+        HAL_Delay(1000);
     }
 }
 

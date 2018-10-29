@@ -1,5 +1,6 @@
 #include <platform/memory.h>
 #include <platform/eventloop.h>
+#include <platform/debug.h>
 #include <eventloop.h>
 #include "eventloop.h"
 #include "common.h"
@@ -40,12 +41,7 @@ static void* _duk_realloc(void *udata, void *ptr, size_t size) {
 }
 
 static void duk_fatal_handler(void *udata, const char *msg) {
-    for (;;) {
-        platform_debug_led_on();
-        platform_sleep(100);
-        platform_debug_led_off();
-        platform_sleep(100);
-    }
+    debug_platform_notify_duk_error(udata, msg);
 }
 
 static duk_context *ctx = NULL;
@@ -63,7 +59,10 @@ static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
     timeout = duk_require_uint(ctx, 1);
 
     callback_t *callback = eventloop_callback_create_from_context(ctx, 0);
-    eventloop_platform_timer_start(callback, (long) timeout, 0);
+    if (eventloop_platform_timer_start(callback, (long) timeout, 0) != ERR_MODULE_SUCC) {
+        duk_error(ctx, DUK_ERR_EVAL_ERROR, "Can't start timer");
+        return 0;
+    }
 
     duk_push_pointer(ctx, callback); // return handler to the setTimeout object
     return 1;
@@ -82,7 +81,10 @@ static duk_ret_t eventloop_native_set_interval(duk_context *ctx) {
     timeout = duk_require_uint(ctx, 1);
 
     callback_t *callback = eventloop_callback_create_from_context(ctx, 0);
-    eventloop_platform_timer_start(callback, (long) timeout, 1);
+    if (eventloop_platform_timer_start(callback, (long) timeout, 1) != ERR_MODULE_SUCC) {
+        duk_error(ctx, DUK_ERR_EVAL_ERROR, "Can't start timer");
+        return 0;
+    }
 
     duk_push_pointer(ctx, callback);
     return 1;
