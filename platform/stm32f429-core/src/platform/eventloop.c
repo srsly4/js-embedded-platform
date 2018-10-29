@@ -70,12 +70,17 @@ module_ret_t _timer_cleanup(timer_item_t *timer) {
     // delete timer from linked list
     if (timer->prev) {
         timer->prev->next = timer->next;
+    } else {
+        timer_first = timer->next;
     }
     if (timer->next) {
         timer->next->prev = timer->prev;
+    } else {
+        timer_last = timer->prev;
     }
 
     vPortFree(timer);
+    return ERR_MODULE_SUCC;
 }
 void _timer_callback_completion(callback_t *callback) {
     if (!callback->user_data) {
@@ -144,5 +149,8 @@ module_ret_t eventloop_platform_timer_stop(callback_t *callback) {
             return ERR_MODULE_TIMEOUT;
         }
         _timer_cleanup(timer);
+        return ERR_MODULE_SUCC;
+    } else {
+        return ERR_MODULE_MEM;
     }
 }

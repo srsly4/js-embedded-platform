@@ -205,6 +205,12 @@ static void GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_14;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 /**
@@ -232,23 +238,22 @@ void tcpip_init_callback(void *args) {
 }
 
 void start_main_task(void const * argument) {
-    char msg[] = "Hello there!\n\0";
+    char msg[16];
     // argument is useless anyway now
     MX_LWIP_Init(tcpip_init_callback);
-    err_t err;
-
-
-    size_t freeHeap = xPortGetFreeHeapSize();
-
     entrypoint();
 
     struct udp_pcb* test_pcb = udp_new();
-    err = udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
+    udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
     for(;;) {
-        osDelay(5000);
-        struct pbuf *buf = pbuf_alloc(PBUF_TRANSPORT, sizeof(msg), PBUF_RAM);
-        memcpy(buf->payload, msg, sizeof(msg));
-        err = udp_sendto(test_pcb, buf, IP4_ADDR_BROADCAST, 9998);
+        osDelay(100);
+        size_t freeHeap = xPortGetFreeHeapSize();
+        size_t freeMinEver = xPortGetMinimumEverFreeHeapSize();
+        sprintf(msg, "%d;%d", freeHeap, freeMinEver);
+        size_t msg_size = strlen(msg) + 1;
+        struct pbuf *buf = pbuf_alloc(PBUF_TRANSPORT, (u16_t) msg_size, PBUF_RAM);
+        memcpy(buf->payload, msg, msg_size);
+        udp_sendto(test_pcb, buf, IP4_ADDR_BROADCAST, 9998);
         pbuf_free(buf);
     }
 }

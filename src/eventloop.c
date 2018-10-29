@@ -49,9 +49,9 @@ static char *code_ptr = NULL;
 static const char test_code[] = "(function(){"
                                 "ledOff();var sw = false;"
                                 "setInterval(function(){"
-                                "var inter = setInterval(function(){if (!sw) { ledOn(); } else { ledOff(); } sw = !sw;}, 100);"
-                                "setTimeout(function(){clearInterval(inter)}, 1500)"
-                                "}, 2500);"
+                                "var inter = setInterval(function(){if (!sw) { ledOn(); } else { ledOff(); } sw = !sw;}, 50);"
+                                "setTimeout(function(){clearInterval(inter); ledOff(); sw=false;}, 1000)"
+                                "}, 1500);"
                                 "})()";
 
 static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
@@ -212,6 +212,7 @@ void eventloop_callback_destroy(callback_t *callback) {
     duk_pop_n(ctx, 2);
 
     free(callback);
+    duk_gc(ctx, 0);
 }
 
 void eventloop_callback_call(callback_t *callback) {
