@@ -14,5 +14,6 @@ void eventloop_platform_queue_push_isr(callback_t *callback);
 
 void eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool_t repeat);
 void eventloop_platform_timer_stop(callback_t *callback);
+void eventloop_platform_timers_cleanup();
 
 #endif //JS_EMBEDDED_PLATFORM_EVENTLOOP_H

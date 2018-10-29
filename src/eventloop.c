@@ -53,8 +53,9 @@ static char *code_ptr = NULL;
 static const char test_code[] = "(function(){"
                                 "ledOff();var sw = false;"
                                 "setInterval(function(){"
-                                "if (!sw) { ledOn(); } else { ledOff(); } sw = !sw"
-                                "}, 100);"
+                                "var inter = setInterval(function(){if (!sw) { ledOn(); } else { ledOff(); } sw = !sw;}, 100);"
+                                "setTimeout(function(){clearInterval(inter)}, 1500)"
+                                "}, 2500);"
                                 "})()";
 
 static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
@@ -68,7 +69,7 @@ static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
     return 1;
 }
 
-static duk_ret_t eventloop_native_clear_timeout(duk_context *ctx) {
+static duk_ret_t eventloop_native_clear_timer(duk_context *ctx) {
     callback_t *callback = duk_require_pointer(ctx, 0);
     if (callback) {
         eventloop_platform_timer_stop(callback);
@@ -85,14 +86,6 @@ static duk_ret_t eventloop_native_set_interval(duk_context *ctx) {
 
     duk_push_pointer(ctx, callback);
     return 1;
-}
-
-static duk_ret_t eventloop_native_clear_interval(duk_context *ctx) {
-    callback_t *callback = duk_require_pointer(ctx, 0);
-    if (callback) {
-        eventloop_platform_timer_stop(callback);
-    }
-    return 0;
 }
 
 #pragma clang diagnostic push
@@ -134,13 +127,13 @@ void eventloop() {
     duk_push_c_function(ctx, eventloop_native_set_timeout, 2);
     duk_put_global_string(ctx, "setTimeout");
 
-    duk_push_c_function(ctx, eventloop_native_clear_timeout, 1);
+    duk_push_c_function(ctx, eventloop_native_clear_timer, 1);
     duk_put_global_string(ctx, "clearTimeout");
 
     duk_push_c_function(ctx, eventloop_native_set_interval, 2);
     duk_put_global_string(ctx, "setInterval");
 
-    duk_push_c_function(ctx, eventloop_native_clear_interval, 1);
+    duk_push_c_function(ctx, eventloop_native_clear_timer, 1);
     duk_put_global_string(ctx, "clearInterval");
 
     duk_eval_string(ctx, code_ptr);
@@ -215,6 +208,8 @@ void eventloop_callback_destroy(callback_t *callback) {
     duk_push_number(ctx, callback->_id);
     duk_del_prop(ctx, -2);
     duk_pop_n(ctx, 2);
+
+    free(callback);
 }
 
 void eventloop_callback_call(callback_t *callback) {

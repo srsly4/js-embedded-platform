@@ -1,15 +1,33 @@
 #include <platform/eventloop.h>
+#include <platform/memory.h>
 #include <common.h>
 #include <cmsis_os.h>
 #include <eventloop.h>
+
+struct timer_item_struct_t ;
+typedef struct timer_item_struct_t timer_item_t;
+struct timer_item_struct_t {
+    callback_t *callback;
+    TimerHandle_t *timer;
+    duk_bool_t repeat;
+    timer_item_t *next;
+    timer_item_t *prev;
+};
 
 static xTaskHandle eventloop_task_handle;
 static QueueHandle_t eventloop_queue;
 
 static callback_t _received_callback;
 
+static timer_item_t *timer_first;
+static timer_item_t *timer_last;
+
 static void eventloop_task(void* args) {
     eventloop_queue = xQueueCreate(EVENTLOOP_PLATFORM_QUEUE_LENGTH, sizeof(callback_t));
+
+    timer_first = NULL;
+    timer_last = NULL;
+
     eventloop();
 }
 
@@ -21,6 +39,8 @@ void kill_eventloop_thread() {
     if (eventloop_task_handle == NULL) {
         return;
     }
+    vTaskSuspend(eventloop_task_handle);
+    clear_eventloop();
     xQueueReset(eventloop_queue);
     vTaskDelete(eventloop_task_handle);
     eventloop_task_handle = NULL;
@@ -40,19 +60,39 @@ callback_t* eventloop_platform_queue_receive() {
     return &_received_callback;
 }
 
+void _timer_cleanup(timer_item_t *timer) {
+    xTimerDelete(timer->timer, 0);
+    eventloop_callback_destroy(timer->callback);
+
+    // delete timer from linked list
+    if (timer->prev) {
+        timer->prev->next = timer->next;
+    }
+    if (timer->next) {
+        timer->next->prev = timer->prev;
+    }
+
+    free(timer);
+}
 void _timer_callback_completion(callback_t *callback) {
-    eventloop_callback_destroy(callback);
+    if (!callback->user_data) {
+        return;
+    }
+    timer_item_t *timer = callback->user_data;
+    if (!timer->repeat) {
+        _timer_cleanup(timer);
+    }
 }
 
 void _timer_trigger(TimerHandle_t xTimer) {
-    callback_t *callback = pvTimerGetTimerID(xTimer);
-    if (callback) {
-        eventloop_callback_call(callback);
-        if (xTimerIsTimerActive(xTimer) == pdFALSE) {
-            xTimerDelete(xTimer, 0);
-            free(callback);
-        }
+    timer_item_t *timer = pvTimerGetTimerID(xTimer);
+    if (timer) {
+        eventloop_callback_call(timer->callback);
     }
+}
+
+void eventloop_platform_timers_cleanup() {
+
 }
 
 void eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool_t repeat) {
@@ -64,15 +104,33 @@ void eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool
     if (!timer) {
         return;
     }
-    vTimerSetTimerID(timer, callback); // timerId is used to store callback ptr
-    callback->user_data = timer;
+
+    timer_item_t *timer_item = malloc(sizeof(timer_item_t));
+    timer_item->timer = timer;
+    timer_item->callback = callback;
+    timer_item->repeat;
+    timer_item->prev = NULL;
+    timer_item->next = NULL;
+
+    // put timer item into the linked list
+    if (timer_first == NULL) {
+        timer_first = timer_last = timer_item;
+    } else {
+        timer_last->next = timer_item;
+        timer_item->prev = timer_last;
+        timer_last = timer_item;
+    }
+
+    vTimerSetTimerID(timer, timer_item); // timerId is used to store timer_item ptr
+    callback->user_data = timer_item;
+
     xTimerStart(timer, 0);
 }
 
 void eventloop_platform_timer_stop(callback_t *callback) {
     if (callback->user_data) {
-        xTimerStop(callback->user_data, 0);
-        xTimerDelete(callback->user_data, 0);
-        free(callback);
+        timer_item_t *timer = callback->user_data;
+        xTimerStop(timer->timer, 0);
+        _timer_cleanup(timer);
     }
 }
