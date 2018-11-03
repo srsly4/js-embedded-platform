@@ -70,7 +70,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#define MAX_PACKET_SIZE 1024
+#define MAX_PACKET_SIZE 1152
+#define MAX_FAILURES 10
 #define DEFAULT_SERVER_IPV6 "[::1]"
 #define DEFAULT_SERVER_IPV4 "127.0.0.1"
 
@@ -79,6 +80,10 @@ static int g_quit = 0;
 
 #define OBJ_COUNT 4
 lwm2m_object_t * objArray[OBJ_COUNT];
+
+// only backup security and server objects
+# define BACKUP_OBJECT_COUNT 2
+lwm2m_object_t * backupObjectArray[BACKUP_OBJECT_COUNT];
 
 typedef struct
 {
@@ -261,15 +266,121 @@ void lwm2m_close_connection(void * sessionH,
     }
 }
 
-int init_lwm2m_server()
+#ifdef LWM2M_BOOTSTRAP
+
+static void prv_backup_objects(lwm2m_context_t * context)
+{
+    uint16_t i;
+
+    for (i = 0; i < BACKUP_OBJECT_COUNT; i++) {
+        if (NULL != backupObjectArray[i]) {
+            switch (backupObjectArray[i]->objID)
+            {
+                case LWM2M_SECURITY_OBJECT_ID:
+                    clean_security_object(backupObjectArray[i]);
+                    lwm2m_free(backupObjectArray[i]);
+                    break;
+                case LWM2M_SERVER_OBJECT_ID:
+                    clean_server_object(backupObjectArray[i]);
+                    lwm2m_free(backupObjectArray[i]);
+                    break;
+                default:
+                    break;
+            }
+        }
+        backupObjectArray[i] = (lwm2m_object_t *)lwm2m_malloc(sizeof(lwm2m_object_t));
+        memset(backupObjectArray[i], 0, sizeof(lwm2m_object_t));
+    }
+
+    /*
+     * Backup content of objects 0 (security) and 1 (server)
+     */
+    copy_security_object(backupObjectArray[0], (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SECURITY_OBJECT_ID));
+    copy_server_object(backupObjectArray[1], (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SERVER_OBJECT_ID));
+}
+
+static void prv_restore_objects(lwm2m_context_t * context)
+{
+    lwm2m_object_t * targetP;
+
+    /*
+     * Restore content  of objects 0 (security) and 1 (server)
+     */
+    targetP = (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SECURITY_OBJECT_ID);
+    // first delete internal content
+    clean_security_object(targetP);
+    // then restore previous object
+    copy_security_object(targetP, backupObjectArray[0]);
+
+    targetP = (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SERVER_OBJECT_ID);
+    // first delete internal content
+    clean_server_object(targetP);
+    // then restore previous object
+    copy_server_object(targetP, backupObjectArray[1]);
+
+    // restart the old servers
+    fprintf(stdout, "[BOOTSTRAP] ObjectList restored\r\n");
+}
+
+static void update_bootstrap_info(lwm2m_client_state_t * previousBootstrapState,
+                                  lwm2m_context_t * context)
+{
+    if (*previousBootstrapState != context->state)
+    {
+        *previousBootstrapState = context->state;
+        switch(context->state)
+        {
+            case STATE_BOOTSTRAPPING:
+#ifdef WITH_LOGS
+                fprintf(stdout, "[BOOTSTRAP] backup security and server objects\r\n");
+#endif
+                prv_backup_objects(context);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+static void close_backup_object()
+{
+    int i;
+    for (i = 0; i < BACKUP_OBJECT_COUNT; i++) {
+        if (NULL != backupObjectArray[i]) {
+            switch (backupObjectArray[i]->objID)
+            {
+                case LWM2M_SECURITY_OBJECT_ID:
+                    clean_security_object(backupObjectArray[i]);
+                    lwm2m_free(backupObjectArray[i]);
+                    break;
+                case LWM2M_SERVER_OBJECT_ID:
+                    clean_server_object(backupObjectArray[i]);
+                    lwm2m_free(backupObjectArray[i]);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+#endif
+
+int init_lwm2m()
 {
     client_data_t data;
     int result;
+    short unavailableTimes = 0;
+    int discoverySocket;
+    char server_host_buffer[40];
+    char server_port_buffer[10];
     lwm2m_context_t * lwm2mH = NULL;
-    const char * localPort = "56830";
-    const char * server = "192.168.70.1";
-    const char * serverPort = LWM2M_STANDARD_PORT_STR;
+    const char * server = "127.0.0.1";
+    const char * serverPort = LWM2M_BSSERVER_PORT_STR;
     char * name = "jsembedded";
+
+#ifdef LWM2M_BOOTSTRAP
+    lwm2m_client_state_t previousState = STATE_INITIAL;
+#endif
 
     char * pskId = NULL;
     uint16_t pskLen = -1;
@@ -283,11 +394,14 @@ int init_lwm2m_server()
         server = (AF_INET == data.addressFamily ? DEFAULT_SERVER_IPV4 : DEFAULT_SERVER_IPV6);
     }
 
-    /*
-     *This call an internal function that create an IPV6 socket on the port 5683.
-     */
-    data.sock = create_socket(localPort, data.addressFamily);
+    data.sock = create_socket(LWM2M_LOCAL_PORT, data.addressFamily);
     if (data.sock < 0)
+    {
+        return -1;
+    }
+
+    discoverySocket = create_socket(LWM2M_LOCAL_DISCOVERY_PORT, AF_INET);
+    if (discoverySocket < 0)
     {
         return -1;
     }
@@ -335,7 +449,11 @@ int init_lwm2m_server()
 #else
     sprintf (serverUri, "coap://%s:%s", server, serverPort);
 #endif
+#ifdef LWM2M_BOOTSTRAP
+    objArray[0] = get_security_object(serverId, serverUri, pskId, pskBuffer, pskLen, true);
+#else
     objArray[0] = get_security_object(serverId, serverUri, pskId, pskBuffer, pskLen, false);
+#endif
     if (NULL == objArray[0])
     {
         return -1;
@@ -429,6 +547,7 @@ int init_lwm2m_server()
 
         FD_ZERO(&readfds);
         FD_SET(data.sock, &readfds);
+        FD_SET(discoverySocket, &readfds);
 
         /*
          * This function does two things:
@@ -437,10 +556,26 @@ int init_lwm2m_server()
          *    (eg. retransmission) and the time between the next operation
          */
         result = lwm2m_step(lwm2mH, &(tv.tv_sec));
-        if (result != 0)
+
+        if (result == COAP_503_SERVICE_UNAVAILABLE)
         {
-            return -1;
+            if (++unavailableTimes >= MAX_FAILURES) {
+                lwm2mH->state = STATE_INITIAL;
+                lwm2m_server_t * bs_server = lwm2mH->bootstrapServerList;
+                while (bs_server != NULL) {
+                    bs_server->dirty = true;
+                    bs_server = bs_server->next;
+                }
+            }
         }
+        else
+        {
+            unavailableTimes = 0;
+        }
+
+#ifdef LWM2M_BOOTSTRAP
+        update_bootstrap_info(&previousState, lwm2mH);
+#endif
         /*
          * This part will set up an interruption until an event happen on SDTIN or the socket until "tv" timed out (set
          * with the precedent function)
@@ -513,6 +648,42 @@ int init_lwm2m_server()
                     }
                 }
             }
+            else if (FD_ISSET(discoverySocket, &readfds))
+            {
+                struct sockaddr_storage addr;
+                socklen_t addrLen;
+
+                addrLen = sizeof(addr);
+
+                /*
+                 * We retrieve the data received
+                 */
+                numBytes = recvfrom(discoverySocket, buffer, MAX_PACKET_SIZE, 0, (struct sockaddr *)&addr, &addrLen);
+
+                if (0 > numBytes)
+                {
+                }
+                else if (0 < numBytes)
+                {
+#ifdef LWM2M_BOOTSTRAP
+                    if (sscanf((const char*) buffer, "coap://%[0-9.]:%[0-9]", server_host_buffer, server_port_buffer) == 2) {
+                        sprintf(serverUri, "coap://%s:%s", server_host_buffer, server_port_buffer);
+
+                        clean_security_object(objArray[0]);
+                        clean_server_object(objArray[1]);
+
+                        if (
+                                create_bootstrap_security_instance(objArray[0], serverUri) != -1 &&
+                                create_bootstrap_server_instance(objArray[1]) != -1)
+                        {
+                            lwm2m_close(lwm2mH);
+                            lwm2mH = lwm2m_init(&data);
+                            lwm2m_configure(lwm2mH, name, NULL, NULL, OBJ_COUNT, objArray);
+                        }
+                    }
+#endif
+                }
+            }
 
         }
     }
@@ -526,6 +697,9 @@ int init_lwm2m_server()
         free(pskBuffer);
 #endif
 
+#ifdef LWM2M_BOOTSTRAP
+        close_backup_object();
+#endif
         lwm2m_close(lwm2mH);
     }
     close(data.sock);
@@ -533,7 +707,9 @@ int init_lwm2m_server()
 
     clean_security_object(objArray[0]);
     lwm2m_free(objArray[0]);
+    clean_server_object(objArray[1]);
     lwm2m_free(objArray[1]);
+    free_object_device(objArray[2]);
     free_object_firmware(objArray[3]);
 
 #ifdef MEMORY_TRACE

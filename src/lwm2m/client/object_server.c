@@ -444,6 +444,23 @@ void display_server_object(lwm2m_object_t * object)
 #endif
 }
 
+void prv_create_server_instance(server_instance_t * serverInstance,
+                                int serverId,
+                                const char* binding,
+                                int lifetime,
+                                bool storing)
+{
+    if (serverInstance == NULL) {
+        return;
+    }
+    serverInstance->instanceId = 0;
+    serverInstance->shortServerId = serverId;
+    serverInstance->lifetime = lifetime;
+    serverInstance->storing = storing;
+    memcpy (serverInstance->binding, binding, strlen(binding)+1);
+}
+
+
 lwm2m_object_t * get_server_object(int serverId,
                                    const char* binding,
                                    int lifetime,
@@ -470,11 +487,12 @@ lwm2m_object_t * get_server_object(int serverId,
         }
 
         memset(serverInstance, 0, sizeof(server_instance_t));
-        serverInstance->instanceId = 0;
-        serverInstance->shortServerId = serverId;
-        serverInstance->lifetime = lifetime;
-        serverInstance->storing = storing;
-        memcpy (serverInstance->binding, binding, strlen(binding)+1);
+        prv_create_server_instance(serverInstance,
+                                   serverId,
+                                   binding,
+                                   lifetime,
+                                   storing);
+
         serverObj->instanceList = LWM2M_LIST_ADD(serverObj->instanceList, serverInstance);
 
         serverObj->readFunc = prv_server_read;
@@ -496,4 +514,30 @@ void clean_server_object(lwm2m_object_t * object)
         object->instanceList = object->instanceList->next;
         lwm2m_free(serverInstance);
     }
+}
+
+int create_bootstrap_server_instance(lwm2m_object_t * serverObj)
+{
+    server_instance_t * serverInstance = (server_instance_t *)LWM2M_LIST_FIND(serverObj->instanceList, 0);
+
+    if (NULL != serverInstance) {
+        return -1;
+    }
+
+    serverInstance = (server_instance_t *)lwm2m_malloc(sizeof(server_instance_t));
+    if (NULL == serverInstance)
+    {
+        return -1;
+    }
+
+    memset(serverInstance, 0, sizeof(server_instance_t));
+    prv_create_server_instance(serverInstance,
+                               1,
+                               "U",
+                               300,
+                               false);
+
+    serverObj->instanceList = LWM2M_LIST_ADD(serverObj->instanceList, serverInstance);
+
+    return 0;
 }
