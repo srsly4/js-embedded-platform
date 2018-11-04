@@ -246,7 +246,7 @@ void start_main_task(void const * argument) {
     struct udp_pcb* test_pcb = udp_new();
     udp_bind(test_pcb, IP4_ADDR_ANY, 9999);
     for(;;) {
-        osDelay(100);
+        osDelay(5000);
         size_t freeHeap = xPortGetFreeHeapSize();
         size_t freeMinEver = xPortGetMinimumEverFreeHeapSize();
         sprintf(msg, "%d;%d", freeHeap, freeMinEver);
