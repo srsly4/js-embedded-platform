@@ -18,6 +18,8 @@
 #include <string.h>
 #include <sys/time.h>
 #include <platform/memory.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #ifndef LWM2M_MEMORY_TRACE
 
@@ -59,4 +61,8 @@ time_t lwm2m_gettime(void)
 
 void lwm2m_printf(const char * format, ...)
 {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
 }

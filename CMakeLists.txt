@@ -8,7 +8,7 @@ project(js-embedded-platform C ASM)
 
 set(PLATFORM "none" CACHE STRING "Build target platform")
 
-add_definitions(-DLWM2M_CLIENT_MODE -DLWM2M_SUPPORT_JSON)
+add_definitions(-DLWM2M_CLIENT_MODE -DLWM2M_BOOTSTRAP -DLWM2M_SUPPORT_JSON)
 
 include_directories(include)
 

@@ -29,6 +29,13 @@
 
 #include "lwm2m/core/liblwm2m.h"
 
+#define LWM2M_LOCAL_PORT "56830"
+#define LWM2M_LOCAL_DISCOVERY_PORT "56840"
+
+#define BOOTSTRAP_URI_SET 0xf0
+#define ENDPOINT_SET 0x0f
+#define BOOTSTRAP_READY (BOOTSTRAP_URI_SET | ENDPOINT_SET)
+
 extern int g_reboot;
 
 /*
@@ -38,6 +45,7 @@ lwm2m_object_t * get_server_object(int serverId, const char* binding, int lifeti
 void clean_server_object(lwm2m_object_t * object);
 void display_server_object(lwm2m_object_t * objectP);
 void copy_server_object(lwm2m_object_t * objectDest, lwm2m_object_t * objectSrc);
+int create_bootstrap_server_instance(lwm2m_object_t * objectP);
 
 /*
  * object_device.c
@@ -57,7 +65,8 @@ void display_firmware_object(lwm2m_object_t * objectP);
  * lwm2mclient.c
  */
 void handle_value_changed(lwm2m_context_t* lwm2mH, lwm2m_uri_t* uri, const char * value, size_t valueLength);
-int init_lwm2m_server();
+int init_lwm2m();
+int init_discovery();
 /*
  * system_api.c
  */
@@ -71,5 +80,6 @@ void clean_security_object(lwm2m_object_t * objectP);
 char * get_server_uri(lwm2m_object_t * objectP, uint16_t secObjInstID);
 void display_security_object(lwm2m_object_t * objectP);
 void copy_security_object(lwm2m_object_t * objectDest, lwm2m_object_t * objectSrc);
+int create_bootstrap_security_instance(lwm2m_object_t * objectP, const char* serverUri);
 
 #endif /* LWM2MCLIENT_H_ */

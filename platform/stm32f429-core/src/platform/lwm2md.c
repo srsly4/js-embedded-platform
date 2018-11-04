@@ -20,7 +20,7 @@ static client_data_t client_data;
 static lwm2m_object_t* obj_array[2];
 
 void lwm2md_task(void const *args) {
-    init_lwm2m_server();
+    init_lwm2m();
 }
 
 void lwm2md_init(void) {
