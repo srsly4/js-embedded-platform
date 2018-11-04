@@ -90,9 +90,9 @@ void platform_sleep(uint32_t ms) {
 }
 
 void platform_debug_led_on() {
-    printf("LedON\n");
+//    printf("LedON\n");
 }
 void platform_debug_led_off() {
-    printf("LedOFF\n");
+//    printf("LedOFF\n");
 }
 #pragma clang diagnostic pop

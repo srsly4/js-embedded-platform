@@ -578,7 +578,7 @@ lwm2m_object_t * get_object_device()
             ((device_data_t*)deviceObj->userData)->battery_level = PRV_BATTERY_LEVEL;
             ((device_data_t*)deviceObj->userData)->free_memory   = PRV_MEMORY_FREE;
             ((device_data_t*)deviceObj->userData)->error = PRV_ERROR_CODE;
-            ((device_data_t*)deviceObj->userData)->time  = 1367491215;
+            ((device_data_t*)deviceObj->userData)->time  = 1541064;
             strcpy(((device_data_t*)deviceObj->userData)->time_offset, "+01:00");
         }
         else
