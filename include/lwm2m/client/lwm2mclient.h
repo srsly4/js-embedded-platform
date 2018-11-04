@@ -32,6 +32,10 @@
 #define LWM2M_LOCAL_PORT "56830"
 #define LWM2M_LOCAL_DISCOVERY_PORT "56840"
 
+#define BOOTSTRAP_URI_SET 0xf0
+#define ENDPOINT_SET 0x0f
+#define BOOTSTRAP_READY (BOOTSTRAP_URI_SET | ENDPOINT_SET)
+
 extern int g_reboot;
 
 /*
@@ -62,6 +66,7 @@ void display_firmware_object(lwm2m_object_t * objectP);
  */
 void handle_value_changed(lwm2m_context_t* lwm2mH, lwm2m_uri_t* uri, const char * value, size_t valueLength);
 int init_lwm2m();
+int init_discovery();
 /*
  * system_api.c
  */

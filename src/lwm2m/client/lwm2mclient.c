@@ -71,12 +71,20 @@
 #include <errno.h>
 
 #define MAX_PACKET_SIZE 1152
+#define MAX_DISCOVERY_PACKET_SIZE 256
+#define MAX_ENDPOINT_LENGTH 40
+#define MAX_HOST_LENGTH 40
+#define MAX_PORT_LENGTH 10
 #define MAX_FAILURES 10
 #define DEFAULT_SERVER_IPV6 "[::1]"
 #define DEFAULT_SERVER_IPV4 "127.0.0.1"
 
 int g_reboot = 0;
 static int g_quit = 0;
+static u_int8_t bootstrap_ready = 0;
+static char server_host_buffer[MAX_HOST_LENGTH];
+static char server_port_buffer[MAX_PORT_LENGTH];
+static char endpoint_buffer[MAX_ENDPOINT_LENGTH];
 
 #define OBJ_COUNT 4
 lwm2m_object_t * objArray[OBJ_COUNT];
@@ -365,18 +373,83 @@ static void close_backup_object()
 }
 #endif
 
+int init_discovery()
+{
+    int discoverySocket;
+    uint8_t buffer[MAX_DISCOVERY_PACKET_SIZE];
+    ssize_t numBytes;
+
+    discoverySocket = create_socket(LWM2M_LOCAL_DISCOVERY_PORT, AF_INET);
+    if (discoverySocket < 0)
+    {
+        return -1;
+    }
+
+    while(g_quit == 0)
+    {
+        struct sockaddr_storage addr;
+        socklen_t addrLen;
+        addrLen = sizeof(addr);
+
+        /*
+         * We retrieve the data received
+        */
+        numBytes = recvfrom(discoverySocket, buffer, MAX_PACKET_SIZE, 0, (struct sockaddr *) &addr, &addrLen);
+
+        if (0 > numBytes)
+        {
+        }
+        else if (0 < numBytes)
+        {
+            if (numBytes > 3 && buffer[0] == 'E'
+                             && buffer[1] == 'P'
+                             && buffer[2] == ':')
+            {
+                memset(endpoint_buffer, 0, MAX_ENDPOINT_LENGTH);
+                if (sscanf((const char*) buffer, "EP:%s", endpoint_buffer) == 1)
+                {
+                    bootstrap_ready |= ENDPOINT_SET;
+                }
+                else
+                {
+                    bootstrap_ready &= ~ENDPOINT_SET;
+                }
+            }
+            else if (numBytes > 4 && buffer[0] == 'U'
+                                  && buffer[1] == 'R'
+                                  && buffer[2] == 'I'
+                                  && buffer[3] == ':')
+            {
+                memset(server_host_buffer, 0, MAX_HOST_LENGTH);
+                memset(server_port_buffer, 0, MAX_PORT_LENGTH);
+                if (sscanf((const char*) buffer, "URI:coap://%[0-9.]:%[0-9]", server_host_buffer, server_port_buffer) == 2)
+                {
+                    bootstrap_ready |= BOOTSTRAP_URI_SET;
+                }
+                else
+                {
+                    bootstrap_ready &= ~BOOTSTRAP_URI_SET;
+                }
+            }
+            memset(buffer, 0, MAX_DISCOVERY_PACKET_SIZE);
+        }
+        else
+        {
+            sendto(discoverySocket, "", 0, 0, (struct sockaddr *) &addr, addrLen);
+        }
+    }
+}
+
+
 int init_lwm2m()
 {
     client_data_t data;
     int result;
     short unavailableTimes = 0;
-    int discoverySocket;
-    char server_host_buffer[40];
-    char server_port_buffer[10];
     lwm2m_context_t * lwm2mH = NULL;
     const char * server = "127.0.0.1";
     const char * serverPort = LWM2M_BSSERVER_PORT_STR;
-    char * name = "jsembedded";
+    char endpoint[MAX_ENDPOINT_LENGTH] = "jsembedded";
 
 #ifdef LWM2M_BOOTSTRAP
     lwm2m_client_state_t previousState = STATE_INITIAL;
@@ -400,11 +473,6 @@ int init_lwm2m()
         return -1;
     }
 
-    discoverySocket = create_socket(LWM2M_LOCAL_DISCOVERY_PORT, AF_INET);
-    if (discoverySocket < 0)
-    {
-        return -1;
-    }
 
     /*
      * Now the main function fill an array with each object, this list will be later passed to liblwm2m.
@@ -496,7 +564,7 @@ int init_lwm2m()
      * We configure the liblwm2m library with the name of the client - which shall be unique for each client -
      * the number of objects we will be passing through and the objects array
      */
-    result = lwm2m_configure(lwm2mH, name, NULL, NULL, OBJ_COUNT, objArray);
+    result = lwm2m_configure(lwm2mH, endpoint, NULL, NULL, OBJ_COUNT, objArray);
     if (result != 0)
     {
         return -1;
@@ -516,6 +584,25 @@ int init_lwm2m()
         struct timeval tv;
         fd_set readfds;
 
+#ifdef LWM2M_BOOTSTRAP
+        if (bootstrap_ready == BOOTSTRAP_READY) {
+            sprintf(serverUri, "coap://%s:%s", server_host_buffer, server_port_buffer);
+            strcpy(endpoint, endpoint_buffer);
+
+            clean_security_object(objArray[0]);
+            clean_server_object(objArray[1]);
+
+            if (
+                    create_bootstrap_security_instance(objArray[0], serverUri) != -1 &&
+                    create_bootstrap_server_instance(objArray[1]) != -1)
+            {
+                lwm2m_close(lwm2mH);
+                lwm2mH = lwm2m_init(&data);
+                lwm2m_configure(lwm2mH, endpoint, NULL, NULL, OBJ_COUNT, objArray);
+            }
+            bootstrap_ready = 0;
+        }
+#endif
 //        if (g_reboot)
 //        {
 //            time_t tv_sec;
@@ -547,7 +634,6 @@ int init_lwm2m()
 
         FD_ZERO(&readfds);
         FD_SET(data.sock, &readfds);
-        FD_SET(discoverySocket, &readfds);
 
         /*
          * This function does two things:
@@ -648,43 +734,6 @@ int init_lwm2m()
                     }
                 }
             }
-            else if (FD_ISSET(discoverySocket, &readfds))
-            {
-                struct sockaddr_storage addr;
-                socklen_t addrLen;
-
-                addrLen = sizeof(addr);
-
-                /*
-                 * We retrieve the data received
-                 */
-                numBytes = recvfrom(discoverySocket, buffer, MAX_PACKET_SIZE, 0, (struct sockaddr *)&addr, &addrLen);
-
-                if (0 > numBytes)
-                {
-                }
-                else if (0 < numBytes)
-                {
-#ifdef LWM2M_BOOTSTRAP
-                    if (sscanf((const char*) buffer, "coap://%[0-9.]:%[0-9]", server_host_buffer, server_port_buffer) == 2) {
-                        sprintf(serverUri, "coap://%s:%s", server_host_buffer, server_port_buffer);
-
-                        clean_security_object(objArray[0]);
-                        clean_server_object(objArray[1]);
-
-                        if (
-                                create_bootstrap_security_instance(objArray[0], serverUri) != -1 &&
-                                create_bootstrap_server_instance(objArray[1]) != -1)
-                        {
-                            lwm2m_close(lwm2mH);
-                            lwm2mH = lwm2m_init(&data);
-                            lwm2m_configure(lwm2mH, name, NULL, NULL, OBJ_COUNT, objArray);
-                        }
-                    }
-#endif
-                }
-            }
-
         }
     }
 
