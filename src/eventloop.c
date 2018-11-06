@@ -2,6 +2,7 @@
 #include <platform/eventloop.h>
 #include <platform/debug.h>
 #include <eventloop.h>
+#include <module.h>
 #include "eventloop.h"
 #include "common.h"
 #include "duktape.h"
@@ -9,7 +10,16 @@
 
 #define EVENTLOOP_CALLBACKS_OBJECT_NAME "_callbacks"
 
+struct module_entry_struct_t;
+typedef struct module_entry_struct_t module_entry_t;
+
+struct module_entry_struct_t {
+    module_t *module;
+    module_entry_t *next;
+};
+
 static uint64_t _callback_sequence_id = 0;
+static module_entry_t *registered_modules = NULL;
 
 
 static duk_ret_t native_sleep(duk_context *ctx) {
@@ -90,6 +100,30 @@ static duk_ret_t eventloop_native_set_interval(duk_context *ctx) {
     return 1;
 }
 
+static duk_ret_t eventloop_native_load_module(duk_context *ctx) {
+    const char* loaded_name = duk_require_string(ctx, 0);
+
+    module_entry_t *ptr = registered_modules;
+    while (registered_modules != NULL) {
+        if (strcmp(ptr->module->keyword, loaded_name) == 0) {
+            break;
+        }
+        ptr = ptr->next;
+    }
+
+    if (ptr == NULL) {
+        duk_error(ctx, DUK_ERR_RANGE_ERROR, "Module not found");
+        return 0;
+    }
+
+    if (ptr->module->init_func(ctx) != ERR_MODULE_SUCC) {
+        duk_error(ctx, DUK_ERR_ERROR, "Module initialization failed");
+        return 0;
+    }
+
+    return 1; // on stack should be only returned module
+}
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 void eventloop() {
@@ -137,6 +171,9 @@ void eventloop() {
 
     duk_push_c_function(ctx, eventloop_native_clear_timer, 1);
     duk_put_global_string(ctx, "clearInterval");
+
+    duk_push_c_function(ctx, eventloop_native_load_module, 1);
+    duk_put_global_string(ctx, "require");
 
     duk_eval_string(ctx, code_ptr);
     duk_pop(ctx);
@@ -217,4 +254,11 @@ void eventloop_callback_destroy(callback_t *callback) {
 
 void eventloop_callback_call(callback_t *callback) {
     eventloop_platform_queue_push(callback);
+}
+
+void eventloop_register_module(module_t *module) {
+    module_entry_t *entry = malloc(sizeof(module_entry_t));
+    entry->module = module;
+    entry->next = registered_modules;
+    registered_modules = entry;
 }

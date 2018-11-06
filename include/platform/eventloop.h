@@ -2,7 +2,7 @@
 #define JS_EMBEDDED_PLATFORM_PLATFORM_EVENTLOOP_H
 
 #include <eventloop.h>
-#include <platform/module.h>
+#include <module.h>
 
 #define EVENTLOOP_PLATFORM_QUEUE_LENGTH 16
 

@@ -3,7 +3,7 @@
 #include <common.h>
 #include <cmsis_os.h>
 #include <eventloop.h>
-#include <platform/module.h>
+#include <module.h>
 
 struct timer_item_struct_t ;
 typedef struct timer_item_struct_t timer_item_t;
