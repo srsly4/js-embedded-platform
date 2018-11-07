@@ -60,7 +60,10 @@ static duk_context *ctx = NULL;
 static char *code_ptr = NULL;
 static const char test_code[] = "var gpio = require('gpio');var sw = false;"
                                 "gpio.setup(gpio.PORTB, gpio.PIN0, gpio.MODE_OUT_PP, gpio.NOPULL);"
-                                "setInterval(function(){ gpio.set(gpio.PORTB, gpio.PIN0, sw); sw = !sw; }, 250)";
+                                "gpio.setup(gpio.PORTB, gpio.PIN7, gpio.MODE_OUT_PP, gpio.NOPULL);"
+                                "gpio.setup(gpio.PORTC, gpio.PIN13, gpio.MODE_IN, gpio.PULLDOWN);"
+                                "setInterval(function(){ gpio.set(gpio.PORTB, gpio.PIN0, sw); sw = !sw; }, 250);"
+                                "setInterval(function(){ var isSet = gpio.get(gpio.PORTC, gpio.PIN13); gpio.set(gpio.PORTB, gpio.PIN7, isSet); }, 150);";
 
 static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
     uint64_t timeout;

@@ -19,6 +19,10 @@ void module_gpio_platform_set(uint32_t port, uint32_t pin, uint32_t mode) {
 }
 
 
+uint8_t module_gpio_platform_get(uint32_t port, uint32_t pin) {
+    return HAL_GPIO_ReadPin((GPIO_TypeDef *)(uintptr_t)port, (uint16_t) pin);
+}
+
 const duk_number_list_entry module_gpio_platform_const_list[] = {
         { "PORTA", (double)(uintptr_t)(GPIOA) },
         { "PORTB", (double)(uintptr_t)(GPIOB) },

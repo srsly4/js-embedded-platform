@@ -16,6 +16,7 @@ static duk_ret_t gpio_setup(duk_context *ctx){
     module_gpio_platform_setup(port, pin, direction, pullup_type);
 
     duk_pop_n(ctx, 4);
+    return 0;
 }
 
 static duk_ret_t gpio_set(duk_context *ctx){
@@ -26,10 +27,18 @@ static duk_ret_t gpio_set(duk_context *ctx){
     module_gpio_platform_set(port, pin, value);
 
     duk_pop_n(ctx, 3);
+    return 0;
 }
 
 static duk_ret_t gpio_get(duk_context *ctx){
+    uint32_t port = duk_require_uint(ctx, 0);
+    uint32_t pin = duk_require_uint(ctx, 1);
 
+    uint8_t ret = module_gpio_platform_get(port, pin);
+
+    duk_pop_n(ctx, 2);
+    duk_push_boolean(ctx, ret);
+    return 1;
 }
 
 static const duk_function_list_entry gpio_module_funcs[] = {
