@@ -47,14 +47,14 @@ module_ret_t module_gpio_init(duk_context *ctx) {
         duk_pop(ctx); // we don't want undefined on stack
         duk_push_object(ctx);
         duk_put_function_list(ctx, -1, gpio_module_funcs);
-        duk_put_number_list(ctx, -1, module_gpio_platform_get_pin_list());
-        duk_put_number_list(ctx, -1, module_gpio_platform_get_port_list());
+        duk_put_number_list(ctx, -1, module_gpio_platform_get_const_list());
 
         module_ptr = duk_get_heapptr(ctx, -1);
         duk_put_prop_string(ctx, -2, GPIO_MODULE_STASH_NAME);
     }
     duk_pop(ctx); // pop global stack
     duk_push_heapptr(ctx, module_ptr); // will be returned module
+    return ERR_MODULE_SUCC;
 }
 
 static const module_t gpio_module = {

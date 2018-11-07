@@ -8,5 +8,6 @@ void platform_sleep(uint32_t ms);
 void platform_debug_led_on();
 void platform_debug_led_off();
 
+void platform_register_modules();
 
 #endif //JS_EMBEDDED_PLATFORM_PLATFORM_H

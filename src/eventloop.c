@@ -15,11 +15,13 @@ typedef struct module_entry_struct_t module_entry_t;
 
 struct module_entry_struct_t {
     module_t *module;
+    uint8_t is_loaded;
     module_entry_t *next;
 };
 
 static uint64_t _callback_sequence_id = 0;
 static module_entry_t *registered_modules = NULL;
+static module_entry_t *loaded_modules = NULL;
 
 
 static duk_ret_t native_sleep(duk_context *ctx) {
@@ -56,13 +58,11 @@ static void duk_fatal_handler(void *udata, const char *msg) {
 
 static duk_context *ctx = NULL;
 static char *code_ptr = NULL;
-static const char test_code[] = "(function(){"
-                                "ledOff();var sw = false;"
+static const char test_code[] = "var gpio = require('gpio');ledOff();var sw = false;"
                                 "setInterval(function(){"
                                 "var inter = setInterval(function(){if (!sw) { ledOn(); } else { ledOff(); } sw = !sw;}, 50);"
                                 "setTimeout(function(){clearInterval(inter); ledOff(); sw=false;}, 1000)"
-                                "}, 1500);"
-                                "})()";
+                                "}, 1500);";
 
 static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
     uint64_t timeout;
@@ -104,7 +104,7 @@ static duk_ret_t eventloop_native_load_module(duk_context *ctx) {
     const char* loaded_name = duk_require_string(ctx, 0);
 
     module_entry_t *ptr = registered_modules;
-    while (registered_modules != NULL) {
+    while (ptr != NULL) {
         if (strcmp(ptr->module->keyword, loaded_name) == 0) {
             break;
         }
@@ -112,13 +112,22 @@ static duk_ret_t eventloop_native_load_module(duk_context *ctx) {
     }
 
     if (ptr == NULL) {
-        duk_error(ctx, DUK_ERR_RANGE_ERROR, "Module not found");
+        duk_error(ctx, DUK_ERR_ERROR, "Module not found");
         return 0;
     }
 
     if (ptr->module->init_func(ctx) != ERR_MODULE_SUCC) {
         duk_error(ctx, DUK_ERR_ERROR, "Module initialization failed");
         return 0;
+    }
+
+    if (!ptr->is_loaded)  {
+        module_entry_t *loaded_module = malloc(sizeof(module_entry_t));
+        loaded_module->is_loaded = 1;
+        loaded_module->module = ptr->module;
+        loaded_module->next = loaded_modules;
+        loaded_modules = loaded_module;
+        ptr->is_loaded = 1;
     }
 
     return 1; // on stack should be only returned module
@@ -142,6 +151,7 @@ void eventloop() {
             duk_fatal_handler
     );
 
+    // put the callbacks object onto stash
     duk_push_global_stash(ctx);
     duk_push_object(ctx);
     duk_put_prop_string(ctx, -2, EVENTLOOP_CALLBACKS_OBJECT_NAME);
@@ -150,16 +160,14 @@ void eventloop() {
     duk_push_global_object(ctx);
     duk_push_object(ctx);
 
-
-    duk_push_c_function(ctx, native_sleep, 1);
-    duk_put_global_string(ctx, "sleep");
-
+    // fixme: replace test functions with module
     duk_push_c_function(ctx, native_led_on, 0);
     duk_put_global_string(ctx, "ledOn");
 
     duk_push_c_function(ctx, native_led_off, 0);
     duk_put_global_string(ctx, "ledOff");
 
+    // native timer async functions
     duk_push_c_function(ctx, eventloop_native_set_timeout, 2);
     duk_put_global_string(ctx, "setTimeout");
 
@@ -172,15 +180,30 @@ void eventloop() {
     duk_push_c_function(ctx, eventloop_native_clear_timer, 1);
     duk_put_global_string(ctx, "clearInterval");
 
+    // native module loader function
     duk_push_c_function(ctx, eventloop_native_load_module, 1);
     duk_put_global_string(ctx, "require");
 
+    platform_register_modules();
+
+    // compile and execute top-most level function
     duk_eval_string(ctx, code_ptr);
-    duk_pop(ctx);
+    duk_pop(ctx); // ignore result
 
     duk_push_global_stash(ctx);
     duk_get_prop_string(ctx, -1, EVENTLOOP_CALLBACKS_OBJECT_NAME);
     while (1) {
+        // call module-provided non-blocking procedures
+        module_entry_t *entry = loaded_modules;
+        while (entry) {
+            module_eventloop_func_t func = entry->module->eventloop_func;
+            if (func) {
+                func();
+            }
+            entry = entry->next;
+        }
+
+        // receive and execute first callback in queue
         callback_t *callback = eventloop_platform_queue_receive();
         duk_push_number(ctx, callback->_id);
         if (duk_get_prop(ctx, -2)) {
@@ -194,6 +217,7 @@ void eventloop() {
         }
         duk_pop(ctx); // function return or undefined
 
+        // call completion handler of executed callback
         if (callback->completion_handler != NULL) {
             callback->completion_handler(callback);
         }
@@ -260,5 +284,6 @@ void eventloop_register_module(module_t *module) {
     module_entry_t *entry = malloc(sizeof(module_entry_t));
     entry->module = module;
     entry->next = registered_modules;
+    entry->is_loaded = 0;
     registered_modules = entry;
 }
