@@ -23,6 +23,8 @@ static duk_ret_t gpio_set(duk_context *ctx){
     uint32_t pin = duk_require_uint(ctx, 1);
     duk_bool_t value = duk_require_boolean(ctx, 2);
 
+    module_gpio_platform_set(port, pin, value);
+
     duk_pop_n(ctx, 3);
 }
 
@@ -59,7 +61,8 @@ module_ret_t module_gpio_init(duk_context *ctx) {
 
 static const module_t gpio_module = {
         "gpio",
-        &module_gpio_init
+        &module_gpio_init,
+        NULL
 };
 
 const module_t* module_gpio_get() {

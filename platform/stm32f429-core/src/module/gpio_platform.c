@@ -4,19 +4,31 @@
 
 
 void module_gpio_platform_setup(uint32_t port, uint32_t pin, uint32_t direction, uint32_t pullup_type) {
-
+    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitStruct.Pin = pin;
+    GPIO_InitStruct.Mode = direction;
+    GPIO_InitStruct.Pull = pullup_type;
+    // any usage of high-freq GPIO in javascript is useless due to performance
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init((GPIO_TypeDef *)(uintptr_t)port, &GPIO_InitStruct);
 }
 
+
+void module_gpio_platform_set(uint32_t port, uint32_t pin, uint32_t mode) {
+    HAL_GPIO_WritePin((GPIO_TypeDef *)(uintptr_t)port, (uint16_t) pin, (GPIO_PinState) mode);
+}
+
+
 const duk_number_list_entry module_gpio_platform_const_list[] = {
-        { "GPIOA", (double)(uintptr_t)(GPIOA) },
-        { "GPIOB", (double)(uintptr_t)(GPIOB) },
-        { "GPIOC", (double)(uintptr_t)(GPIOC) },
-        { "GPIOD", (double)(uintptr_t)(GPIOD) },
-        { "GPIOE", (double)(uintptr_t)(GPIOE) },
-        { "GPIOF", (double)(uintptr_t)(GPIOF) },
-        { "GPIOG", (double)(uintptr_t)(GPIOG) },
-        { "GPIOH", (double)(uintptr_t)(GPIOH) },
-        { "GPIOI", (double)(uintptr_t)(GPIOI) },
+        { "PORTA", (double)(uintptr_t)(GPIOA) },
+        { "PORTB", (double)(uintptr_t)(GPIOB) },
+        { "PORTC", (double)(uintptr_t)(GPIOC) },
+        { "PORTD", (double)(uintptr_t)(GPIOD) },
+        { "PORTE", (double)(uintptr_t)(GPIOE) },
+        { "PORTF", (double)(uintptr_t)(GPIOF) },
+        { "PORTG", (double)(uintptr_t)(GPIOG) },
+        { "PORTH", (double)(uintptr_t)(GPIOH) },
+        { "PORTI", (double)(uintptr_t)(GPIOI) },
         { "PIN0", (double)GPIO_PIN_0 },
         { "PIN1", (double)GPIO_PIN_1 },
         { "PIN2", (double)GPIO_PIN_2 },

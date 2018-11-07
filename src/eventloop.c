@@ -58,11 +58,9 @@ static void duk_fatal_handler(void *udata, const char *msg) {
 
 static duk_context *ctx = NULL;
 static char *code_ptr = NULL;
-static const char test_code[] = "var gpio = require('gpio');ledOff();var sw = false;"
-                                "setInterval(function(){"
-                                "var inter = setInterval(function(){if (!sw) { ledOn(); } else { ledOff(); } sw = !sw;}, 50);"
-                                "setTimeout(function(){clearInterval(inter); ledOff(); sw=false;}, 1000)"
-                                "}, 1500);";
+static const char test_code[] = "var gpio = require('gpio');var sw = false;"
+                                "gpio.setup(gpio.PORTB, gpio.PIN0, gpio.MODE_OUT_PP, gpio.NOPULL);"
+                                "setInterval(function(){ gpio.set(gpio.PORTB, gpio.PIN0, sw); sw = !sw; }, 250)";
 
 static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
     uint64_t timeout;
