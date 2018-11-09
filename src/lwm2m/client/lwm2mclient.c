@@ -406,7 +406,7 @@ int init_discovery()
                              && buffer[2] == ':')
             {
                 memset(endpoint_buffer, 0, MAX_ENDPOINT_LENGTH);
-                if (sscanf((const char*) buffer, "EP:%s", endpoint_buffer) == 1)
+                if (sscanf((const char*) buffer, "EP:%39c", endpoint_buffer) == 1)
                 {
                     bootstrap_ready |= ENDPOINT_SET;
                 }
@@ -422,7 +422,7 @@ int init_discovery()
             {
                 memset(server_host_buffer, 0, MAX_HOST_LENGTH);
                 memset(server_port_buffer, 0, MAX_PORT_LENGTH);
-                if (sscanf((const char*) buffer, "URI:coap://%[0-9.]:%[0-9]", server_host_buffer, server_port_buffer) == 2)
+                if (sscanf((const char*) buffer, "URI:coap://%39[0-9.]:%9[0-9]", server_host_buffer, server_port_buffer) == 2)
                 {
                     bootstrap_ready |= BOOTSTRAP_URI_SET;
                 }
