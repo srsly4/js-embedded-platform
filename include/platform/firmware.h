@@ -14,7 +14,7 @@ uint8_t firmware_platform_write_code_chunk(const char* data, uint32_t offset, ui
 uint8_t firmware_platform_write_finish(void);
 
 const char* firmware_platform_get_name();
-const char* firmware_platform_get_code();
+char * firmware_platform_get_code();
 
 void firmware_platform_downloader_task_start(const char* uri);
 

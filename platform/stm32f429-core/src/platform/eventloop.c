@@ -44,6 +44,8 @@ void kill_eventloop_thread() {
     clear_eventloop();
     xQueueReset(eventloop_queue);
     vTaskDelete(eventloop_task_handle);
+    vQueueDelete(eventloop_queue);
+    eventloop_queue = NULL;
     eventloop_task_handle = NULL;
 }
 
@@ -100,7 +102,14 @@ void _timer_trigger(TimerHandle_t xTimer) {
 }
 
 void eventloop_platform_timers_cleanup() {
-
+    timer_item_t *ptr = timer_first;
+    timer_item_t *next;
+    while (ptr) {
+        next = ptr->next;
+        xTimerDelete(ptr->timer, 0);
+        vPortFree(ptr);
+        ptr = next;
+    }
 }
 
 module_ret_t eventloop_platform_timer_start(callback_t *callback, long timeout, duk_bool_t repeat) {

@@ -14,6 +14,8 @@ typedef void (*callback_completion_handler_t)(callback_t* callback);
 
 struct callback_struct_t {
     uint64_t _id;
+    callback_t *_next;
+    callback_t *_prev;
     callback_arg_handler_t arg_handler;
     callback_completion_handler_t completion_handler;
     void *user_data;

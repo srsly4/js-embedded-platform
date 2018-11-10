@@ -21,15 +21,11 @@ struct module_entry_struct_t {
 };
 
 static uint64_t _callback_sequence_id = 0;
+static callback_t *callback_list_first = NULL;
+
 static module_entry_t *registered_modules = NULL;
 static module_entry_t *loaded_modules = NULL;
 
-
-static duk_ret_t native_sleep(duk_context *ctx) {
-    duk_int32_t ms = duk_to_int32(ctx, 0);
-    platform_sleep((uint32_t)ms);
-    return 0;
-}
 
 static duk_ret_t native_led_on(duk_context *ctx) {
     platform_debug_led_on();
@@ -58,7 +54,7 @@ static void duk_fatal_handler(void *udata, const char *msg) {
 }
 
 static duk_context *ctx = NULL;
-static char *code_ptr = NULL;
+char *code_ptr = NULL;
 static const char test_code[] = "var gpio = require('gpio');var sw = false;"
                                 "gpio.setup(gpio.PORTB, gpio.PIN0, gpio.MODE_OUT_PP, gpio.NOPULL);"
                                 "gpio.setup(gpio.PORTB, gpio.PIN7, gpio.MODE_OUT_PP, gpio.NOPULL);"
@@ -139,7 +135,7 @@ static duk_ret_t eventloop_native_load_module(duk_context *ctx) {
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 void eventloop() {
     // load firmware from persistent storage
-    code_ptr = (char *) firmware_platform_get_code();
+    code_ptr = firmware_platform_get_code();
 
     // if there is no code, load default's
     if (code_ptr == NULL) {
@@ -239,6 +235,20 @@ char* get_user_code() {
 }
 
 void clear_eventloop() {
+    eventloop_platform_timers_cleanup();
+    duk_gc(ctx, 0);
+
+    // destroy all callbacks
+    callback_t *c_ptr, *c_next;
+    c_ptr = callback_list_first;
+
+    while (c_ptr) {
+        c_next = c_ptr->_next;
+        free(c_ptr);
+        c_ptr = c_next;
+    }
+    callback_list_first = NULL;
+
     if (ctx != NULL) {
         duk_destroy_heap(ctx);
         ctx = NULL;
@@ -250,6 +260,9 @@ void clear_eventloop() {
     ptr = loaded_modules;
     while (ptr) {
         old_ptr = ptr;
+        if (ptr->module->cleanup_func) {
+            ptr->module->cleanup_func(ctx);
+        }
         ptr = ptr->next;
         free(old_ptr);
     }
@@ -277,6 +290,12 @@ callback_t *eventloop_callback_create_from_context(duk_context *ctx, duk_idx_t f
     callback->arg_handler = NULL;
     callback->user_data = NULL;
     callback->completion_handler = NULL;
+    callback->_prev = NULL;
+    callback->_next = callback_list_first;
+    if (callback_list_first) {
+        callback_list_first->_prev = callback;
+    }
+    callback_list_first = callback;
 
     duk_push_global_stash(ctx);
     duk_get_prop_string(ctx, -1, EVENTLOOP_CALLBACKS_OBJECT_NAME);
@@ -296,7 +315,17 @@ void eventloop_callback_destroy(callback_t *callback) {
     duk_del_prop(ctx, -2);
     duk_pop_n(ctx, 2);
 
+    if (callback->_prev) {
+        callback->_prev->_next = callback->_next;
+    } else {
+        callback_list_first = callback;
+    }
+    if (callback->_next) {
+        callback->_next->_prev = callback->_prev;
+    }
     free(callback);
+
+    // force garbage collection
     duk_gc(ctx, 0);
 }
 

@@ -71,6 +71,7 @@ module_ret_t module_gpio_init(duk_context *ctx) {
 static const module_t gpio_module = {
         "gpio",
         &module_gpio_init,
+        NULL,
         NULL
 };
 
