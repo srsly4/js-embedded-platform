@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stm32f429_firmware.h>
 #include <platform/eventloop.h>
+#include <platform/debug.h>
 
 #define FIRMWARE_DOWNLOADER_URI_PROTOCOL "firm://"
 #define FIRMWARE_DOWNLOADER_CHUNK_SIZE 512
@@ -177,6 +178,8 @@ uint8_t firmware_downloader_start(const char *uri) {
 
     if (res == FIRMWARE_SUCC) {
         start_eventloop_thread();
+    } else {
+        debug_platform_error_led_on();
     }
 
     return res;

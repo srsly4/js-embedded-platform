@@ -16,7 +16,7 @@ typedef struct {
 static FLASH_EraseInitTypeDef erase_init_struct;
 static firmware_metadata_t write_metadata;
 
-__attribute__((__section__(".firmware_code"))) const firmware_metadata_t flash_metadata;
+__attribute__((__section__(".firmware_code"))) firmware_metadata_t flash_metadata;
 
 uint8_t firmware_platform_write_start(const char* firmware_name) {
     if (HAL_FLASH_Unlock() != HAL_OK) {
@@ -99,7 +99,7 @@ const char *firmware_platform_get_name() {
     return flash_metadata.preambule == FIRMWARE_BINARY_PREAMBLE ? flash_metadata.name_ptr : NULL;
 }
 
-const char *firmware_platform_get_code() {
+char *firmware_platform_get_code() {
     return flash_metadata.preambule == FIRMWARE_BINARY_PREAMBLE ? flash_metadata.code_ptr : NULL;
 }
 
@@ -109,8 +109,9 @@ static char* downloader_uri = NULL;
 void _downloader_task(void* args) {
     firmware_downloader_start(downloader_uri);
 
-    vTaskDelete(downloader_task);
+    TaskHandle_t free_task = downloader_task;
     downloader_task = NULL;
+    vTaskDelete(free_task);
 }
 
 void firmware_platform_downloader_task_start(const char *uri) {
