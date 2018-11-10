@@ -3,6 +3,7 @@
 #include <cmsis_os.h>
 #include <lwip/sockets.h>
 #include <string.h>
+#include <platform/firmware.h>
 
 osThreadId httpdTaskHandle;
 
@@ -46,6 +47,16 @@ static void http_serve(void *arg) {
                 );
                 prepare_http_response(client->buff, HTTPD_CLIENT_BUFF_LENGTH,
                     response_buff
+                );
+            } else if (strncmp((const char *) &client->buff[5], "forceUpdate", 11) == 0) {
+                const char uri[] = "firm://192.168.1.6:10001";
+                firmware_platform_downloader_task_start(uri);
+                snprintf(response_buff, 128,
+                         "<html><head><title>Update</title><body>Update in progress from URI: %s</body></head></html>",
+                         uri
+                );
+                prepare_http_response(client->buff, HTTPD_CLIENT_BUFF_LENGTH,
+                                      response_buff
                 );
             } else {
                 prepare_http_response(client->buff, HTTPD_CLIENT_BUFF_LENGTH, defaultResponse);

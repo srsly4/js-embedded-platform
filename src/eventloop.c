@@ -1,6 +1,11 @@
 #include <platform/httpd.h>
 #include <platform/memory.h>
 #include <platform/eventloop.h>
+#include <platform/debug.h>
+#include <eventloop.h>
+#include <module.h>
+#include <platform/firmware.h>
+#include "eventloop.h"
 #include "common.h"
 #include "duktape.h"
 #include "platform.h"
@@ -53,6 +58,9 @@ static const char test_code[] = "(function(){"
 
 // fixme: this is only a mock of event loop
 void eventloop() {
+    // load firmware from persistent storage
+    code_ptr = (char *) firmware_platform_get_code();
+
     // if there is no code, load default's
     if (code_ptr == NULL) {
         code_ptr = (char *) test_code;
