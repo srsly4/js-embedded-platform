@@ -2,6 +2,7 @@
 #define JS_EMBEDDED_PLATFORM_MODULE_H
 
 #include <stdint.h>
+#include <duktape.h>
 
 typedef uint8_t module_ret_t;
 

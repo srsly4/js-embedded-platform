@@ -3,6 +3,7 @@
 #include <platform/debug.h>
 #include <eventloop.h>
 #include <module.h>
+#include <platform/firmware.h>
 #include "eventloop.h"
 #include "common.h"
 #include "duktape.h"
@@ -137,6 +138,9 @@ static duk_ret_t eventloop_native_load_module(duk_context *ctx) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 void eventloop() {
+    // load firmware from persistent storage
+    code_ptr = (char *) firmware_platform_get_code();
+
     // if there is no code, load default's
     if (code_ptr == NULL) {
         code_ptr = (char *) test_code;
@@ -240,6 +244,25 @@ void clear_eventloop() {
         ctx = NULL;
         _callback_sequence_id = 0;
     }
+
+    module_entry_t *ptr, *old_ptr;
+
+    ptr = loaded_modules;
+    while (ptr) {
+        old_ptr = ptr;
+        ptr = ptr->next;
+        free(old_ptr);
+    }
+
+    ptr = registered_modules;
+    while (ptr) {
+        old_ptr = ptr;
+        ptr = ptr->next;
+        free(old_ptr);
+    }
+
+    loaded_modules = NULL;
+    registered_modules = NULL;
 }
 
 callback_t *eventloop_callback_create_from_context(duk_context *ctx, duk_idx_t from_idx) {
