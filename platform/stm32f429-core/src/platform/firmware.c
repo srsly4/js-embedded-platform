@@ -121,3 +121,8 @@ void firmware_platform_downloader_task_start(const char *uri) {
     downloader_uri = (char *) uri;
     xTaskCreate(_downloader_task, "downloader_task", 1024, NULL, 3, &downloader_task);
 }
+
+uint64_t firmware_platform_max_memory()
+{
+    return STM32F429_FIRMWARE_SECTOR_SIZE - 64;
+}

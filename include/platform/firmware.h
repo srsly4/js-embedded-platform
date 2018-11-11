@@ -12,6 +12,7 @@
 uint8_t firmware_platform_write_start(const char* firmware_name);
 uint8_t firmware_platform_write_code_chunk(const char* data, uint32_t offset, uint32_t length);
 uint8_t firmware_platform_write_finish(void);
+uint64_t firmware_platform_max_memory(void);
 
 const char* firmware_platform_get_name();
 char * firmware_platform_get_code();
