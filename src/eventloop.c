@@ -318,7 +318,7 @@ void eventloop_callback_destroy(callback_t *callback) {
     if (callback->_prev) {
         callback->_prev->_next = callback->_next;
     } else {
-        callback_list_first = callback;
+        callback_list_first = callback->_next;
     }
     if (callback->_next) {
         callback->_next->_prev = callback->_prev;
