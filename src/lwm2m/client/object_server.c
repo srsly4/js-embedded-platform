@@ -532,7 +532,7 @@ int create_bootstrap_server_instance(lwm2m_object_t * serverObj)
 
     memset(serverInstance, 0, sizeof(server_instance_t));
     prv_create_server_instance(serverInstance,
-                               1,
+                               123,
                                "U",
                                300,
                                false);

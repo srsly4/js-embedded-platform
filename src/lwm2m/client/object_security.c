@@ -680,7 +680,7 @@ int create_bootstrap_security_instance(lwm2m_object_t * securityObj,
 
     prv_create_security_instance(targetP,
                                  securityObj,
-                                 1,
+                                 123,
                                  serverUri,
                                  NULL,
                                  NULL,
