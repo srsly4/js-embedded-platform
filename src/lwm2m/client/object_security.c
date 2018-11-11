@@ -253,17 +253,26 @@ static uint8_t prv_security_write(uint16_t instanceId,
         break;
         case LWM2M_SECURITY_PUBLIC_KEY_ID:
             if (targetP->publicIdentity != NULL) lwm2m_free(targetP->publicIdentity);
-            targetP->publicIdentity = (char *)lwm2m_malloc(dataArray[i].value.asBuffer.length +1);
-            memset(targetP->publicIdentity, 0, dataArray[i].value.asBuffer.length + 1);
-            if (targetP->publicIdentity != NULL)
+            if (dataArray[i].value.asBuffer.length)
             {
-                memcpy(targetP->publicIdentity, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
-                targetP->publicIdLen = dataArray[i].value.asBuffer.length;
-                result = COAP_204_CHANGED;
+                targetP->publicIdentity = (char *) lwm2m_malloc(dataArray[i].value.asBuffer.length + 1);
+                memset(targetP->publicIdentity, 0, dataArray[i].value.asBuffer.length + 1);
+                if (targetP->publicIdentity != NULL)
+                {
+                    memcpy(targetP->publicIdentity, (char *) dataArray[i].value.asBuffer.buffer,
+                           dataArray[i].value.asBuffer.length);
+                    targetP->publicIdLen = dataArray[i].value.asBuffer.length;
+                    result = COAP_204_CHANGED;
+                }
+                else
+                {
+                    result = COAP_500_INTERNAL_SERVER_ERROR;
+                }
             }
             else
             {
-                result = COAP_500_INTERNAL_SERVER_ERROR;
+                targetP->publicIdentity = NULL;
+                result = COAP_204_CHANGED;
             }
             break;
 
@@ -285,17 +294,26 @@ static uint8_t prv_security_write(uint16_t instanceId,
 
         case LWM2M_SECURITY_SECRET_KEY_ID:
             if (targetP->secretKey != NULL) lwm2m_free(targetP->secretKey);
-            targetP->secretKey = (char *)lwm2m_malloc(dataArray[i].value.asBuffer.length +1);
-            memset(targetP->secretKey, 0, dataArray[i].value.asBuffer.length + 1);
-            if (targetP->secretKey != NULL)
+            if (dataArray[i].value.asBuffer.length)
             {
-                memcpy(targetP->secretKey, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
-                targetP->secretKeyLen = dataArray[i].value.asBuffer.length;
-                result = COAP_204_CHANGED;
+                targetP->secretKey = (char *) lwm2m_malloc(dataArray[i].value.asBuffer.length + 1);
+                memset(targetP->secretKey, 0, dataArray[i].value.asBuffer.length + 1);
+                if (targetP->secretKey != NULL)
+                {
+                    memcpy(targetP->secretKey, (char *) dataArray[i].value.asBuffer.buffer,
+                           dataArray[i].value.asBuffer.length);
+                    targetP->secretKeyLen = dataArray[i].value.asBuffer.length;
+                    result = COAP_204_CHANGED;
+                }
+                else
+                {
+                    result = COAP_500_INTERNAL_SERVER_ERROR;
+                }
             }
             else
             {
-                result = COAP_500_INTERNAL_SERVER_ERROR;
+                targetP->secretKey = NULL;
+                result = COAP_204_CHANGED;
             }
             break;
 
@@ -465,6 +483,9 @@ void copy_security_object(lwm2m_object_t * objectDest, lwm2m_object_t * objectSr
         {
             instanceDest->publicIdentity = lwm2m_strdup(instanceSrc->publicIdentity);
             instanceDest->secretKey = lwm2m_strdup(instanceSrc->secretKey);
+        } else {
+            instanceDest->publicIdentity = NULL;
+            instanceDest->secretKey = NULL;
         }
         instanceSrc = (security_instance_t *)instanceSrc->next;
         if (previousInstanceDest == NULL)
@@ -659,7 +680,7 @@ int create_bootstrap_security_instance(lwm2m_object_t * securityObj,
 
     prv_create_security_instance(targetP,
                                  securityObj,
-                                 1,
+                                 123,
                                  serverUri,
                                  NULL,
                                  NULL,
