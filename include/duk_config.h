@@ -218,12 +218,6 @@
 #define DUK_F_UNIX
 #endif
 
-/* C++ */
-#undef DUK_F_CPP
-#if defined(__cplusplus)
-#define DUK_F_CPP
-#endif
-
 /* Intel x86 (32-bit), x64 (64-bit) or x32 (64-bit but 32-bit pointers),
  * define only one of DUK_F_X86, DUK_F_X64, DUK_F_X32.
  * https://sites.google.com/site/x32abi/
@@ -299,6 +293,12 @@
 /* Clang */
 #if defined(__clang__)
 #define DUK_F_CLANG
+#endif
+
+/* C++ */
+#undef DUK_F_CPP
+#if defined(__cplusplus)
+#define DUK_F_CPP
 #endif
 
 /* C99 or above */
@@ -836,9 +836,7 @@
 #include <stdint.h>
 #endif
 
-#if defined(DUK_F_CPP)
-#include <exception>  /* std::exception */
-#endif
+/* <exception> is only included if needed, based on DUK_USE_xxx flags. */
 
 /*
  *  Architecture autodetection
@@ -850,25 +848,22 @@
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 1
 #endif
-/* XXX: This is technically not guaranteed because it's possible to configure
- * an x86 to require aligned accesses with Alignment Check (AC) flag.
- */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 1
-#endif
+
 #define DUK_USE_PACKED_TVAL
+
+/* FreeBSD, -m32, and clang prior to 5.0 has union aliasing issues which
+ * break duk_tval copying.  Disable packed duk_tval automatically.
+ */
+#if defined(DUK_F_FREEBSD) && defined(DUK_F_X86) && \
+    defined(__clang__) && defined(__clang_major__) && (__clang_major__ < 5)
+#undef DUK_USE_PACKED_TVAL
+#endif
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_X64)
 /* --- x64 --- */
 #define DUK_USE_ARCH_STRING "x64"
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 1
-#endif
-/* XXX: This is technically not guaranteed because it's possible to configure
- * an x86 to require aligned accesses with Alignment Check (AC) flag.
- */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 1
 #endif
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
@@ -878,48 +873,30 @@
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 1
 #endif
-/* XXX: This is technically not guaranteed because it's possible to configure
- * an x86 to require aligned accesses with Alignment Check (AC) flag.
- */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 1
-#endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_ARM32)
 /* --- ARM 32-bit --- */
 #define DUK_USE_ARCH_STRING "arm32"
 /* Byte order varies, so rely on autodetect. */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 4
-#endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_ARM64)
 /* --- ARM 64-bit --- */
 #define DUK_USE_ARCH_STRING "arm64"
 /* Byte order varies, so rely on autodetect. */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_MIPS32)
 /* --- MIPS 32-bit --- */
 #define DUK_USE_ARCH_STRING "mips32"
 /* MIPS byte order varies so rely on autodetection. */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_MIPS64)
 /* --- MIPS 64-bit --- */
 #define DUK_USE_ARCH_STRING "mips64"
 /* MIPS byte order varies so rely on autodetection. */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_PPC32)
@@ -927,9 +904,6 @@
 #define DUK_USE_ARCH_STRING "ppc32"
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 3
-#endif
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
 #endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
@@ -939,39 +913,24 @@
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 3
 #endif
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_SPARC32)
 /* --- SPARC 32-bit --- */
 #define DUK_USE_ARCH_STRING "sparc32"
 /* SPARC byte order varies so rely on autodetection. */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_SPARC64)
 /* --- SPARC 64-bit --- */
 #define DUK_USE_ARCH_STRING "sparc64"
 /* SPARC byte order varies so rely on autodetection. */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_SUPERH)
 /* --- SuperH --- */
 #define DUK_USE_ARCH_STRING "sh"
 /* Byte order varies, rely on autodetection. */
-/* Based on 'make checkalign' there are no alignment requirements on
- * Linux SH4, but align by 4 is probably a good basic default.
- */
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 4
-#endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_M68K)
@@ -980,9 +939,6 @@
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 3
 #endif
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
-#endif
 #define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_EMSCRIPTEN)
@@ -990,9 +946,6 @@
 #define DUK_USE_ARCH_STRING "emscripten"
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 1
-#endif
-#if !defined(DUK_USE_ALIGN_BY)
-#define DUK_USE_ALIGN_BY 8
 #endif
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
@@ -2005,8 +1958,8 @@ typedef duk_uint_fast16_t duk_small_uint_fast_t;
 
 /* Boolean values are represented with the platform 'unsigned int'. */
 typedef duk_small_uint_t duk_bool_t;
-#define DUK_BOOL_MIN              DUK_SMALL_INT_MIN
-#define DUK_BOOL_MAX              DUK_SMALL_INT_MAX
+#define DUK_BOOL_MIN              DUK_SMALL_UINT_MIN
+#define DUK_BOOL_MAX              DUK_SMALL_UINT_MAX
 
 /* Index values must have at least 32-bit signed range. */
 typedef duk_int_t duk_idx_t;
@@ -2540,10 +2493,13 @@ typedef struct duk_hthread duk_context;
  *
  *  Assume unaligned accesses are not supported unless specifically allowed
  *  in the target platform.  Some platforms may support unaligned accesses
- *  but alignment to 4 or 8 may still be desirable.
+ *  but alignment to 4 or 8 may still be desirable.  Note that unaligned
+ *  accesses (and even pointers) relative to natural alignment (regardless
+ *  of target alignment) are technically undefined behavior and thus
+ *  compiler/architecture specific.
  */
 
-/* If not provided, use safe default for alignment. */
+/* If not forced, use safe default for alignment. */
 #if !defined(DUK_USE_ALIGN_BY)
 #define DUK_USE_ALIGN_BY 8
 #endif
@@ -2595,6 +2551,7 @@ typedef struct duk_hthread duk_context;
  */
 #define DUK_CAUSE_SEGFAULT()  do { *((volatile duk_uint32_t *) NULL) = (duk_uint32_t) 0xdeadbeefUL; } while (0)
 #endif
+
 #if !defined(DUK_UNREF)
 /* Macro for suppressing warnings for potentially unreferenced variables.
  * The variables can be actually unreferenced or unreferenced in some
@@ -2604,9 +2561,24 @@ typedef struct duk_hthread duk_context;
  */
 #define DUK_UNREF(x)  do { (void) (x); } while (0)
 #endif
-#if !defined(DUK_NORETURN)
+
+/* Fillin for DUK_NORETURN; DUK_WO_NORETURN() is used to insert dummy
+ * dummy statements after noreturn calls to silence harmless compiler
+ * warnings, e.g.:
+ *
+ *   DUK_ERROR_TYPE(thr, "aiee");
+ *   DUK_WO_NORETURN(return 0;);
+ *
+ * Statements inside DUK_WO_NORETURN() must NEVER be actually reachable,
+ * and they're only included to satisfy the compiler.
+ */
+#if defined(DUK_NORETURN)
+#define DUK_WO_NORETURN(stmt) do { } while (0)
+#else
 #define DUK_NORETURN(decl)  decl
+#define DUK_WO_NORETURN(stmt) do { stmt } while (0)
 #endif
+
 #if !defined(DUK_UNREACHABLE)
 /* Don't know how to declare unreachable point, so don't do it; this
  * may cause some spurious compilation warnings (e.g. "variable used
@@ -2614,6 +2586,7 @@ typedef struct duk_hthread duk_context;
  */
 #define DUK_UNREACHABLE()  do { } while (0)
 #endif
+
 #if !defined(DUK_LOSE_CONST)
 /* Convert any input pointer into a "void *", losing a const qualifier.
  * This is not fully portable because casting through duk_uintptr_t may
@@ -2781,8 +2754,8 @@ typedef struct duk_hthread duk_context;
 #if defined(DUK_F_PACKED_TVAL_POSSIBLE)
 #define DUK_USE_PACKED_TVAL
 #endif
-
 #undef DUK_F_PACKED_TVAL_POSSIBLE
+
 #endif  /* DUK_F_PACKED_TVAL_PROVIDED */
 /* Object property allocation layout has implications for memory and code
  * footprint and generated code size/speed.  The best layout also depends
@@ -2814,27 +2787,90 @@ typedef struct duk_hthread duk_context;
 #endif
 
 /*
+ *  Forced options
+ */
+
+#define DUK_USE_ALLOW_UNDEFINED_BEHAVIOR
+#undef DUK_USE_ARRAY_FASTPATH
+#undef DUK_USE_ARRAY_PROP_FASTPATH
+#undef DUK_USE_AUGMENT_ERROR_CREATE
+#undef DUK_USE_AUGMENT_ERROR_THROW
+#undef DUK_USE_BASE64_FASTPATH
+#undef DUK_USE_BASE64_SUPPORT
+#undef DUK_USE_BUFFEROBJECT_SUPPORT
+#undef DUK_USE_BYTECODE_DUMP_SUPPORT
+#undef DUK_USE_CACHE_ACTIVATION
+#undef DUK_USE_CACHE_CATCHER
+#undef DUK_USE_COROUTINE_SUPPORT
+#undef DUK_USE_DEBUGGER_SUPPORT
+#define DUK_USE_DEBUG_BUFSIZE 2048
+#undef DUK_USE_ENCODING_BUILTINS
+#undef DUK_USE_ERRCREATE
+#undef DUK_USE_ERRTHROW
+#undef DUK_USE_ES6
+#undef DUK_USE_ES6_PROXY
+#undef DUK_USE_ES6_UNICODE_ESCAPE
+#undef DUK_USE_ES7
+#undef DUK_USE_ES7_EXP_OPERATOR
+#undef DUK_USE_ES8
+#undef DUK_USE_ES9
+#define DUK_USE_EXEC_PREFER_SIZE
+#undef DUK_USE_FAST_REFCOUNT_DEFAULT
+#define DUK_USE_FATAL_MAXLEN 64
+#undef DUK_USE_FUNC_FILENAME_PROPERTY
+#define DUK_USE_FUNC_NAME_PROPERTY
+#undef DUK_USE_HEX_FASTPATH
+#undef DUK_USE_HEX_SUPPORT
+#define DUK_USE_HOBJECT_HASH_PROP_LIMIT 64
+#undef DUK_USE_HSTRING_ARRIDX
+#undef DUK_USE_HSTRING_LAZY_CLEN
+#undef DUK_USE_HTML_COMMENTS
+#undef DUK_USE_IDCHAR_FASTPATH
+#undef DUK_USE_JC
+#undef DUK_USE_JSON_DECNUMBER_FASTPATH
+#undef DUK_USE_JSON_DECSTRING_FASTPATH
+#undef DUK_USE_JSON_EATWHITE_FASTPATH
+#undef DUK_USE_JSON_QUOTESTRING_FASTPATH
+#undef DUK_USE_JSON_STRINGIFY_FASTPATH
+#undef DUK_USE_JX
+#undef DUK_USE_LEXER_SLIDING_WINDOW
+#define DUK_USE_LIGHTFUNC_BUILTINS
+#undef DUK_USE_LITCACHE_SIZE
+#define DUK_USE_PARANOID_ERRORS
+#undef DUK_USE_PC2LINE
+#undef DUK_USE_PERFORMANCE_BUILTIN
+#define DUK_USE_PREFER_SIZE
+#undef DUK_USE_REFLECT_BUILTIN
+#undef DUK_USE_REGEXP_CANON_BITMAP
+#undef DUK_USE_REGEXP_CANON_WORKAROUND
+#undef DUK_USE_SHEBANG_COMMENTS
+#undef DUK_USE_SOURCE_NONBMP
+#define DUK_USE_STRTAB_GROW_LIMIT 65536L
+#define DUK_USE_STRTAB_MAXSIZE 128
+#define DUK_USE_STRTAB_MINSIZE 128
+#define DUK_USE_STRTAB_RESIZE_CHECK_MASK 255
+#define DUK_USE_STRTAB_SHRINK_LIMIT 0
+#undef DUK_USE_SYMBOL_BUILTIN
+#undef DUK_USE_TRACEBACKS
+#undef DUK_USE_VALSTACK_GROW_SHIFT
+#undef DUK_USE_VALSTACK_SHRINK_CHECK_SHIFT
+#undef DUK_USE_VALSTACK_SHRINK_SLACK_SHIFT
+#define DUK_USE_VALSTACK_UNSAFE
+#undef DUK_USE_VERBOSE_ERRORS
+#undef DUK_USE_VERBOSE_EXECUTOR_ERRORS
+
+/*
  *  Autogenerated defaults
  */
 
 #define DUK_USE_ARRAY_BUILTIN
-#define DUK_USE_ARRAY_FASTPATH
-#define DUK_USE_ARRAY_PROP_FASTPATH
 #undef DUK_USE_ASSERTIONS
-#define DUK_USE_AUGMENT_ERROR_CREATE
-#define DUK_USE_AUGMENT_ERROR_THROW
 #define DUK_USE_AVOID_PLATFORM_FUNCPTRS
-#define DUK_USE_BASE64_FASTPATH
 #define DUK_USE_BOOLEAN_BUILTIN
-#define DUK_USE_BUFFEROBJECT_SUPPORT
 #undef DUK_USE_BUFLEN16
-#define DUK_USE_BYTECODE_DUMP_SUPPORT
-#define DUK_USE_CACHE_ACTIVATION
-#define DUK_USE_CACHE_CATCHER
 #define DUK_USE_CALLSTACK_LIMIT 10000
 #define DUK_USE_COMMONJS_MODULES
 #define DUK_USE_COMPILER_RECLIMIT 2500
-#define DUK_USE_COROUTINE_SUPPORT
 #undef DUK_USE_CPP_EXCEPTIONS
 #undef DUK_USE_DATAPTR16
 #undef DUK_USE_DATAPTR_DEC16
@@ -2849,50 +2885,33 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_DEBUGGER_DUMPHEAP
 #undef DUK_USE_DEBUGGER_INSPECT
 #undef DUK_USE_DEBUGGER_PAUSE_UNCAUGHT
-#undef DUK_USE_DEBUGGER_SUPPORT
 #define DUK_USE_DEBUGGER_THROW_NOTIFY
 #undef DUK_USE_DEBUGGER_TRANSPORT_TORTURE
-#define DUK_USE_DEBUG_BUFSIZE 65536L
 #define DUK_USE_DEBUG_LEVEL 0
 #undef DUK_USE_DEBUG_WRITE
 #define DUK_USE_DOUBLE_LINKED_HEAP
 #define DUK_USE_DUKTAPE_BUILTIN
-#define DUK_USE_ENCODING_BUILTINS
-#define DUK_USE_ERRCREATE
-#define DUK_USE_ERRTHROW
-#define DUK_USE_ES6
 #define DUK_USE_ES6_OBJECT_PROTO_PROPERTY
 #define DUK_USE_ES6_OBJECT_SETPROTOTYPEOF
-#define DUK_USE_ES6_PROXY
 #define DUK_USE_ES6_REGEXP_SYNTAX
-#define DUK_USE_ES6_UNICODE_ESCAPE
-#define DUK_USE_ES7
-#define DUK_USE_ES7_EXP_OPERATOR
-#define DUK_USE_ES8
-#define DUK_USE_ES9
 #define DUK_USE_ESBC_LIMITS
 #define DUK_USE_ESBC_MAX_BYTES 2147418112L
 #define DUK_USE_ESBC_MAX_LINENUMBER 2147418112L
 #undef DUK_USE_EXEC_FUN_LOCAL
 #undef DUK_USE_EXEC_INDIRECT_BOUND_CHECK
-#undef DUK_USE_EXEC_PREFER_SIZE
 #define DUK_USE_EXEC_REGCONST_OPTIMIZE
 #undef DUK_USE_EXEC_TIMEOUT_CHECK
 #undef DUK_USE_EXPLICIT_NULL_INIT
 #undef DUK_USE_EXTSTR_FREE
 #undef DUK_USE_EXTSTR_INTERN_CHECK
 #undef DUK_USE_FASTINT
-#define DUK_USE_FAST_REFCOUNT_DEFAULT
-#undef DUK_USE_FATAL_HANDLER
-#define DUK_USE_FATAL_MAXLEN 128
+#define DUK_USE_FATAL_HANDLER
 #define DUK_USE_FINALIZER_SUPPORT
 #undef DUK_USE_FINALIZER_TORTURE
 #undef DUK_USE_FUNCPTR16
 #undef DUK_USE_FUNCPTR_DEC16
 #undef DUK_USE_FUNCPTR_ENC16
 #define DUK_USE_FUNCTION_BUILTIN
-#define DUK_USE_FUNC_FILENAME_PROPERTY
-#define DUK_USE_FUNC_NAME_PROPERTY
 #undef DUK_USE_GC_TORTURE
 #undef DUK_USE_GET_MONOTONIC_TIME
 #undef DUK_USE_GET_RANDOM_DOUBLE
@@ -2901,7 +2920,6 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_HEAPPTR16
 #undef DUK_USE_HEAPPTR_DEC16
 #undef DUK_USE_HEAPPTR_ENC16
-#define DUK_USE_HEX_FASTPATH
 #define DUK_USE_HOBJECT_ARRAY_ABANDON_LIMIT 2
 #define DUK_USE_HOBJECT_ARRAY_FAST_RESIZE_LIMIT 9
 #define DUK_USE_HOBJECT_ARRAY_MINGROW_ADD 16
@@ -2909,34 +2927,18 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_HOBJECT_ENTRY_MINGROW_ADD 16
 #define DUK_USE_HOBJECT_ENTRY_MINGROW_DIVISOR 8
 #define DUK_USE_HOBJECT_HASH_PART
-#define DUK_USE_HOBJECT_HASH_PROP_LIMIT 8
-#define DUK_USE_HSTRING_ARRIDX
 #define DUK_USE_HSTRING_CLEN
 #undef DUK_USE_HSTRING_EXTDATA
-#define DUK_USE_HSTRING_LAZY_CLEN
-#define DUK_USE_HTML_COMMENTS
-#define DUK_USE_IDCHAR_FASTPATH
 #undef DUK_USE_INJECT_HEAP_ALLOC_ERROR
 #undef DUK_USE_INTERRUPT_COUNTER
 #undef DUK_USE_INTERRUPT_DEBUG_FIXUP
-#define DUK_USE_JC
 #define DUK_USE_JSON_BUILTIN
-#define DUK_USE_JSON_DECNUMBER_FASTPATH
-#define DUK_USE_JSON_DECSTRING_FASTPATH
 #define DUK_USE_JSON_DEC_RECLIMIT 1000
-#define DUK_USE_JSON_EATWHITE_FASTPATH
 #define DUK_USE_JSON_ENC_RECLIMIT 1000
-#define DUK_USE_JSON_QUOTESTRING_FASTPATH
-#undef DUK_USE_JSON_STRINGIFY_FASTPATH
 #define DUK_USE_JSON_SUPPORT
-#define DUK_USE_JX
-#define DUK_USE_LEXER_SLIDING_WINDOW
-#undef DUK_USE_LIGHTFUNC_BUILTINS
 #define DUK_USE_MARK_AND_SWEEP_RECLIMIT 256
 #define DUK_USE_MATH_BUILTIN
 #define DUK_USE_NATIVE_CALL_RECLIMIT 1000
-#define DUK_USE_NONSTD_ARRAY_CONCAT_TRAILER
-#define DUK_USE_NONSTD_ARRAY_MAP_TRAILER
 #define DUK_USE_NONSTD_ARRAY_SPLICE_DELCOUNT
 #undef DUK_USE_NONSTD_FUNC_CALLER_PROPERTY
 #undef DUK_USE_NONSTD_FUNC_SOURCE_PROPERTY
@@ -2948,18 +2950,11 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_NUMBER_BUILTIN
 #define DUK_USE_OBJECT_BUILTIN
 #undef DUK_USE_OBJSIZES16
-#undef DUK_USE_PARANOID_ERRORS
-#define DUK_USE_PC2LINE
-#define DUK_USE_PERFORMANCE_BUILTIN
-#undef DUK_USE_PREFER_SIZE
 #undef DUK_USE_PROMISE_BUILTIN
 #define DUK_USE_PROVIDE_DEFAULT_ALLOC_FUNCTIONS
 #undef DUK_USE_REFCOUNT16
 #define DUK_USE_REFCOUNT32
 #define DUK_USE_REFERENCE_COUNTING
-#define DUK_USE_REFLECT_BUILTIN
-#define DUK_USE_REGEXP_CANON_BITMAP
-#undef DUK_USE_REGEXP_CANON_WORKAROUND
 #define DUK_USE_REGEXP_COMPILER_RECLIMIT 10000
 #define DUK_USE_REGEXP_EXECUTOR_RECLIMIT 10000
 #define DUK_USE_REGEXP_SUPPORT
@@ -2970,9 +2965,7 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_ROM_STRINGS
 #define DUK_USE_SECTION_B
 #undef DUK_USE_SELF_TESTS
-#define DUK_USE_SHEBANG_COMMENTS
 #undef DUK_USE_SHUFFLE_TORTURE
-#define DUK_USE_SOURCE_NONBMP
 #undef DUK_USE_STRHASH16
 #undef DUK_USE_STRHASH_DENSE
 #define DUK_USE_STRHASH_SKIP_SHIFT 5
@@ -2980,26 +2973,13 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_STRICT_UTF8_SOURCE
 #define DUK_USE_STRING_BUILTIN
 #undef DUK_USE_STRLEN16
-#define DUK_USE_STRTAB_GROW_LIMIT 17
-#define DUK_USE_STRTAB_MAXSIZE 268435456L
-#define DUK_USE_STRTAB_MINSIZE 1024
 #undef DUK_USE_STRTAB_PTRCOMP
-#define DUK_USE_STRTAB_RESIZE_CHECK_MASK 255
-#define DUK_USE_STRTAB_SHRINK_LIMIT 6
 #undef DUK_USE_STRTAB_TORTURE
-#undef DUK_USE_SYMBOL_BUILTIN
 #define DUK_USE_TAILCALL
 #define DUK_USE_TARGET_INFO "unknown"
-#define DUK_USE_TRACEBACKS
 #define DUK_USE_TRACEBACK_DEPTH 10
 #define DUK_USE_USER_DECLARE() /* no user declarations */
-#define DUK_USE_VALSTACK_GROW_SHIFT 2
 #define DUK_USE_VALSTACK_LIMIT 1000000L
-#define DUK_USE_VALSTACK_SHRINK_CHECK_SHIFT 2
-#define DUK_USE_VALSTACK_SHRINK_SLACK_SHIFT 4
-#undef DUK_USE_VALSTACK_UNSAFE
-#define DUK_USE_VERBOSE_ERRORS
-#define DUK_USE_VERBOSE_EXECUTOR_ERRORS
 #define DUK_USE_VOLUNTARY_GC
 #define DUK_USE_ZERO_BUFFER_DATA
 
@@ -3010,6 +2990,15 @@ typedef struct duk_hthread duk_context;
  */
 
 /* __OVERRIDE_DEFINES__ */
+
+/*
+ *  Conditional includes
+ */
+
+#if defined(DUK_F_CPP) && defined(DUK_USE_CPP_EXCEPTIONS)
+#include <exception>  /* std::exception */
+#include <stdexcept>  /* std::runtime_error */
+#endif
 
 /*
  *  Date provider selection

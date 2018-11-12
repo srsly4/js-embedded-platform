@@ -7,5 +7,6 @@ void* malloc(size_t size);
 void free(void *ptr);
 void* realloc(void* ptr, size_t size);
 char* strdup(const char *s);
+size_t get_memory_free();
 
 #endif //JS_EMBEDDED_PLATFORM_MEMORY_H

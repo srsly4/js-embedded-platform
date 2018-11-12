@@ -41,7 +41,8 @@ _Min_Stack_Size = 0x400;; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K
+CODE (r)        : ORIGIN = 0x081E0000, LENGTH = 128K
+FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1920K
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 192K
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K
 }
@@ -173,7 +174,12 @@ SECTIONS
     . = ALIGN(8);
   } >RAM
 
-
+  .firmware_code :
+  {
+    . = ALIGN(4);
+     KEEP(*(.firmware_code))
+    . = ALIGN(4);
+  } > CODE
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

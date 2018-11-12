@@ -46,6 +46,7 @@
 #include <ctype.h>
 #include <lwm2m/core/liblwm2m.h>
 #include <platform/eventloop.h>
+#include "platform/firmware.h"
 #include <common.h>
 
 // ---- private object "Firmware" specific defines ----
@@ -64,6 +65,7 @@
 #define LWM2M_FIRMWARE_PROTOCOL_NULL    ((uint8_t)-1)
 
 typedef struct {
+    char pkg_uri[256];
     uint8_t state;
     uint8_t result;
     char pkg_name[256];
@@ -94,24 +96,28 @@ static uint8_t prv_firmware_read(uint16_t instanceId,
 
     // is the server asking for the full object ?
     if (*numDataP == 0) {
-        *dataArrayP = lwm2m_data_new(6);
+        *dataArrayP = lwm2m_data_new(7);
         if (*dataArrayP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
-        *numDataP = 6;
-        (*dataArrayP)[0].id = 3;
-        (*dataArrayP)[1].id = 5;
-        (*dataArrayP)[2].id = 6;
-        (*dataArrayP)[3].id = 7;
-        (*dataArrayP)[4].id = 8;
-        (*dataArrayP)[5].id = 9;
+        *numDataP = 7;
+        (*dataArrayP)[0].id = 1;
+        (*dataArrayP)[1].id = 3;
+        (*dataArrayP)[2].id = 5;
+        (*dataArrayP)[3].id = 6;
+        (*dataArrayP)[4].id = 7;
+        (*dataArrayP)[5].id = 8;
+        (*dataArrayP)[6].id = 9;
     }
 
     i = 0;
     do {
         switch ((*dataArrayP)[i].id) {
             case RES_M_PACKAGE:
-            case RES_M_PACKAGE_URI:
             case RES_M_UPDATE:
                 result = COAP_405_METHOD_NOT_ALLOWED;
+                break;
+            case RES_M_PACKAGE_URI:
+                lwm2m_data_encode_string(data->pkg_uri, *dataArrayP + i);
+                result = COAP_205_CONTENT;
                 break;
 
             case RES_M_STATE:
@@ -208,8 +214,22 @@ static uint8_t prv_firmware_write(uint16_t instanceId,
                 break;
 
             case RES_M_PACKAGE_URI:
-                // URL for download the firmware
-                result = COAP_204_CHANGED;
+                result = COAP_406_NOT_ACCEPTABLE;
+                if (dataArray[i].type == LWM2M_TYPE_STRING || dataArray[i].type == LWM2M_TYPE_OPAQUE) {
+                    if (dataArray[i].value.asBuffer.length > 15 && dataArray[i].value.asBuffer.length < 256) {
+                        char ip[20] = "";
+                        int port = 0;
+
+                        sscanf(dataArray[i].value.asBuffer.buffer, "firm://%99[^:]:%99d", ip, &port);
+
+                        if (port != 0 && ip[0] != '\0') {
+                            strncpy(data->pkg_uri, dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
+                            data->pkg_uri[dataArray[i].value.asBuffer.length] = 0;
+                            firmware_platform_downloader_task_start(data->pkg_uri);
+                            result = COAP_204_CHANGED;
+                        }
+                    }
+                }
                 break;
 
             default:
@@ -317,6 +337,7 @@ lwm2m_object_t *get_object_firmware(void) {
 
             data->state = 1;
             data->result = 0;
+            strcpy(data->pkg_uri, "firm://127.0.0.1:44444");
             strcpy(data->pkg_name, "lwm2mclient");
             strcpy(data->pkg_version, "1.0");
 

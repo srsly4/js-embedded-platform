@@ -24,3 +24,7 @@ void *realloc(void *ptr, size_t size) {
     }
     return new_ptr;
 }
+
+size_t get_memory_free() {
+    return xPortGetFreeHeapSize();
+}

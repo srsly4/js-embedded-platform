@@ -7,13 +7,11 @@ set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
 set(CMAKE_OBJDUMP arm-none-eabi-objdump)
 set(CMAKE_SIZE arm-none-eabi-size)
 
-add_definitions(-D__weak=__attribute__\(\(weak\)\) -DMBEDTLS_CONFIG_FILE=\"mbedtls_config.h\" -D__packed=__attribute__\(\(__packed__\)\) -DUSE_HAL_DRIVER -DSTM32F407xx )
+add_definitions(-D__weak=__attribute__\(\(weak\)\) -DMBEDTLS_CONFIG_FILE=\"mbedtls_config.h\" -D__packed=__attribute__\(\(__packed__\)\) -DUSE_HAL_DRIVER -DSTM32F429xx )
 add_definitions(-DLWM2M_LITTLE_ENDIAN -DLWM2M_EMBEDDED_MODE)
 
 set(FPU_FLAGS "-mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 set(COMMON_FLAGS "-mcpu=cortex-m4 ${FPU_FLAGS} -mthumb -ffunction-sections -fdata-sections -g -fno-common -fmessage-length=0 -specs=nosys.specs -specs=nano.specs")
-
-include_directories(include drivers/STM32F4xx_HAL_Driver/Inc)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -std=c++11")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -std=gnu99")
@@ -38,7 +36,6 @@ string(REGEX REPLACE "([^;]+)" "stm32f4xx_hal_\\1.c" HAL_DEPENDENCIES "${HAL_DEP
 set(HAL_DEPENDENCIES ${HAL_DEPENDENCIES} stm32f4xx_hal.c stm32f4xx_ll_usb)
 string(REGEX REPLACE "([^;]+)" "${PLATFORM_DIRECTORY}/drivers/STM32F4xx_HAL_Driver/Src/\\1" HAL_DEPENDENCIES "${HAL_DEPENDENCIES}")
 set(PLATFORM_SOURCES ${PLATFORM_SOURCES} ${MIDDLEWARES_SOURCES} ${HAL_DEPENDENCIES})
-message("${PLATFORM_SOURCES}")
 
 set(SOURCES ${SOURCES} ${PLATFORM_SOURCES})
 

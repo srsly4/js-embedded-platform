@@ -93,7 +93,7 @@
     extern uint32_t SystemCoreClock;
 #endif
 
-#define configCHECK_FOR_STACK_OVERFLOW           0
+#define configCHECK_FOR_STACK_OVERFLOW           1
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          0
 #define configSUPPORT_DYNAMIC_ALLOCATION         1
@@ -109,6 +109,11 @@
 #define configUSE_MUTEXES                        1
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
+
+#define configUSE_TIMERS                         1
+#define configTIMER_TASK_PRIORITY                4
+#define configTIMER_QUEUE_LENGTH                 32
+#define configTIMER_TASK_STACK_DEPTH             256
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -153,7 +158,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
 /* USER CODE BEGIN 1 */   
-#define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );} 
+#define configASSERT( x ) if ((x) == 0) { taskDISABLE_INTERRUPTS(); for( ;; );}
 /* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
