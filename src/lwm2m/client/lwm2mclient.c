@@ -406,7 +406,7 @@ int init_discovery()
                              && buffer[2] == ':')
             {
                 memset(endpoint_buffer, 0, MAX_ENDPOINT_LENGTH);
-                if (sscanf((const char*) buffer, "EP:%s", endpoint_buffer) == 1)
+                if (sscanf((const char*) buffer, "EP:%39c", endpoint_buffer) == 1)
                 {
                     bootstrap_ready |= ENDPOINT_SET;
                 }
@@ -422,7 +422,7 @@ int init_discovery()
             {
                 memset(server_host_buffer, 0, MAX_HOST_LENGTH);
                 memset(server_port_buffer, 0, MAX_PORT_LENGTH);
-                if (sscanf((const char*) buffer, "URI:coap://%[0-9.]:%[0-9]", server_host_buffer, server_port_buffer) == 2)
+                if (sscanf((const char*) buffer, "URI:coap://%39[0-9.]:%9[0-9]", server_host_buffer, server_port_buffer) == 2)
                 {
                     bootstrap_ready |= BOOTSTRAP_URI_SET;
                 }
@@ -447,7 +447,7 @@ int init_lwm2m()
     int result;
     short unavailableTimes = 0;
     lwm2m_context_t * lwm2mH = NULL;
-    const char * server = "127.0.0.1";
+    const char * server = "192.168.223.105";
     const char * serverPort = LWM2M_BSSERVER_PORT_STR;
     char endpoint[MAX_ENDPOINT_LENGTH] = "jsembedded";
 
@@ -597,6 +597,7 @@ int init_lwm2m()
                     create_bootstrap_server_instance(objArray[1]) != -1)
             {
                 lwm2m_close(lwm2mH);
+                unavailableTimes = 0;
                 lwm2mH = lwm2m_init(&data);
                 lwm2m_configure(lwm2mH, endpoint, NULL, NULL, OBJ_COUNT, objArray);
             }

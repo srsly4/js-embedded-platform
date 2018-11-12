@@ -1,7 +1,6 @@
 #include <platform/memory.h>
 #include <platform/eventloop.h>
 #include <platform/debug.h>
-#include <eventloop.h>
 #include <module.h>
 #include <platform/firmware.h>
 #include "eventloop.h"

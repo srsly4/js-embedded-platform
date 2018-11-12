@@ -2,6 +2,7 @@
 #define JS_EMBEDDED_PLATFORM_FIRMWARE_H
 
 #include <module.h>
+#include <stdint.h>
 
 #define FIRMWARE_BINARY_PREAMBLE 0xAAAAAAAA
 

@@ -7,9 +7,7 @@ set(CMAKE_OBJCOPY objcopy)
 set(CMAKE_OBJDUMP objdump)
 set(CMAKE_SIZE size)
 
-add_definitions(-DLWM2M_LITTLE_ENDIAN -DLWM2M_EMBEDDED_MODE)
-
-include_directories(include drivers/STM32F4xx_HAL_Driver/Inc)
+add_definitions(-DLWM2M_LITTLE_ENDIAN -DLWM2M_EMBEDDED_MODE -D__packed=__attribute__\(\(__packed__\)\))
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -std=c++11")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -std=gnu99")
