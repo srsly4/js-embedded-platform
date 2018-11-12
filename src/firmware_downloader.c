@@ -4,7 +4,6 @@
 #include <platform/sockets.h>
 #include <platform/memory.h>
 #include <string.h>
-#include <stm32f429_firmware.h>
 #include <platform/eventloop.h>
 #include <platform/debug.h>
 
@@ -109,7 +108,7 @@ uint8_t firmware_downloader_start(const char *uri) {
 
     // check if firmware will fit into the memory
     uint16_t chunk_count = pay->description.chunk_num;
-    if (((uint32_t)chunk_count) * FIRMWARE_DOWNLOADER_CHUNK_SIZE > STM32F429_FIRMWARE_SECTOR_SIZE - 64) {
+    if (((uint32_t)chunk_count) * FIRMWARE_DOWNLOADER_CHUNK_SIZE > firmware_platform_max_memory()) {
         res = FIRMWARE_DOWNLOADER_ERR_MEM;
         goto cleanup;
     }

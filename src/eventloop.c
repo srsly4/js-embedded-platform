@@ -317,7 +317,7 @@ void eventloop_callback_destroy(callback_t *callback) {
     if (callback->_prev) {
         callback->_prev->_next = callback->_next;
     } else {
-        callback_list_first = callback;
+        callback_list_first = callback->_next;
     }
     if (callback->_next) {
         callback->_next->_prev = callback->_prev;
@@ -338,4 +338,10 @@ void eventloop_register_module(module_t *module) {
     entry->next = registered_modules;
     entry->is_loaded = 0;
     registered_modules = entry;
+}
+
+void restart_eventloop_thread()
+{
+    kill_eventloop_thread();
+    start_eventloop_thread();
 }
