@@ -55,6 +55,7 @@
 #include <string.h>
 
 #include <stdio.h>
+#include <platform.h>
 
 
 lwm2m_context_t * lwm2m_init(void * userData)
@@ -67,8 +68,7 @@ lwm2m_context_t * lwm2m_init(void * userData)
     {
         memset(contextP, 0, sizeof(lwm2m_context_t));
         contextP->userData = userData;
-        srand((int)lwm2m_gettime());
-        contextP->nextMID = rand();
+        contextP->nextMID = platform_rand();
     }
 
     return contextP;

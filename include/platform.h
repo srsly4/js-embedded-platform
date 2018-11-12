@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void platform_sleep(uint32_t ms);
-
+uint32_t platform_rand();
 void platform_debug_led_on();
 void platform_debug_led_off();
 

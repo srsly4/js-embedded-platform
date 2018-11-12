@@ -53,6 +53,7 @@ union payload {
 
 uint8_t firmware_downloader_start(const char *uri) {
     kill_eventloop_thread();
+    debug_platform_error_led_off();
 
     uint8_t res = FIRMWARE_DOWNLOADER_SUCC;
     char *buff = NULL;
@@ -95,14 +96,16 @@ uint8_t firmware_downloader_start(const char *uri) {
     pay->id = PAYLOAD_TYPE_REQUEST;
     pay->request.chunk_size = FIRMWARE_DOWNLOADER_CHUNK_SIZE / FIRMWARE_DOWNLOADER_CHUNK_MULTIPLIER;
     if (send(socket_fd, buff, sizeof(struct payload_request), 0) < 0) {
-        return FIRMWARE_DOWNLOADER_ERR_CONN;
+        res = FIRMWARE_DOWNLOADER_ERR_CONN;
+        goto cleanup;
     }
 
     // receive firmware description and start writing firmware
     int recv_len = 0;
     do {
-        if ((recv_len = recv(socket_fd, buff, FIRMWARE_DOWNLOADER_BUFFER_SIZE, 0)) < 0) {
-            return FIRMWARE_DOWNLOADER_ERR_CONN;
+        if ((recv_len = recv(socket_fd, buff, FIRMWARE_DOWNLOADER_BUFFER_SIZE, 0)) <= 0) {
+            res = FIRMWARE_DOWNLOADER_ERR_CONN;
+            goto cleanup;
         }
     } while (recv_len < 2 || pay->id != PAYLOAD_TYPE_DESCRIPTION);
 
@@ -131,7 +134,7 @@ uint8_t firmware_downloader_start(const char *uri) {
     uint16_t curr_chunk = 0;
     uint32_t offset = 0;
     while (!is_end) {
-        if ((recv_len = recv(socket_fd, buff, FIRMWARE_DOWNLOADER_BUFFER_SIZE, 0)) < 0) {
+        if ((recv_len = recv(socket_fd, buff, FIRMWARE_DOWNLOADER_BUFFER_SIZE, 0)) <= 0) {
             res = FIRMWARE_DOWNLOADER_ERR_CONN;
             goto cleanup;
         }

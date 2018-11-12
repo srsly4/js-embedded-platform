@@ -79,6 +79,7 @@ void* start_main_task(void* argument) {
 int main(void){
     SystemClock_Config();
     GPIO_Init();
+    srand(time(NULL));
 
     pthread_create(&mainTaskHandle, NULL, start_main_task, NULL);
 
@@ -101,6 +102,11 @@ void platform_debug_led_off() {
 
 void platform_register_modules() {
     eventloop_register_module((module_t *) module_gpio_get());
+}
+
+
+uint32_t platform_rand() {
+    return rand();
 }
 
 #pragma clang diagnostic pop

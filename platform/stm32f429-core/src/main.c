@@ -20,6 +20,7 @@
 
 UART_HandleTypeDef huart3;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
+RNG_HandleTypeDef RngHandle;
 osThreadId mainTaskHandle;
 
 #ifdef  USE_FULL_ASSERT
@@ -215,6 +216,8 @@ static void GPIO_Init(void) {
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
+
+
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM1 interrupt took place, inside
@@ -277,6 +280,9 @@ int main(void){
     HAL_Init();
     SystemClock_Config();
     GPIO_Init();
+    RngHandle.Instance = RNG;
+    __HAL_RCC_RNG_CLK_ENABLE();
+    HAL_RNG_Init(&RngHandle);
 
     osThreadDef(mainTask, start_main_task, osPriorityHigh, 0, 1024);
     mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
@@ -301,6 +307,13 @@ void platform_debug_led_off() {
 
 void platform_register_modules() {
     eventloop_register_module((module_t *) module_gpio_get());
+}
+
+
+uint32_t platform_rand() {
+    uint32_t rnd_number = 0;
+    HAL_RNG_GenerateRandomNumber(&RngHandle, &rnd_number);
+    return rnd_number;
 }
 
 #pragma clang diagnostic pop
