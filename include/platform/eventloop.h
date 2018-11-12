@@ -8,6 +8,7 @@
 
 void start_eventloop_thread();
 void kill_eventloop_thread();
+void restart_eventloop_thread();
 
 callback_t* eventloop_platform_queue_receive();
 void eventloop_platform_queue_push(callback_t *callback);

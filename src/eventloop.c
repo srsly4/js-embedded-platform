@@ -340,3 +340,9 @@ void eventloop_register_module(module_t *module) {
     entry->is_loaded = 0;
     registered_modules = entry;
 }
+
+void restart_eventloop_thread()
+{
+    kill_eventloop_thread();
+    start_eventloop_thread();
+}

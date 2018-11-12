@@ -57,6 +57,8 @@
 
 #include "lwm2m/core/liblwm2m.h"
 #include "lwm2m/client/lwm2mclient.h"
+#include "platform/memory.h"
+#include <platform/eventloop.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -497,6 +499,7 @@ static uint8_t prv_device_execute(uint16_t instanceId,
     switch (resourceId)
     {
         case RES_M_REBOOT:
+            restart_eventloop_thread();
             fprintf(stdout, "\n\t REBOOT\r\n\n");
             g_reboot = 1;
             return COAP_204_CHANGED;
@@ -576,7 +579,7 @@ lwm2m_object_t * get_object_device()
         if (NULL != deviceObj->userData)
         {
             ((device_data_t*)deviceObj->userData)->battery_level = PRV_BATTERY_LEVEL;
-            ((device_data_t*)deviceObj->userData)->free_memory   = PRV_MEMORY_FREE;
+            ((device_data_t*)deviceObj->userData)->free_memory   = get_memory_free();
             ((device_data_t*)deviceObj->userData)->error = PRV_ERROR_CODE;
             ((device_data_t*)deviceObj->userData)->time  = 1541064;
             strcpy(((device_data_t*)deviceObj->userData)->time_offset, "+01:00");
@@ -590,6 +593,11 @@ lwm2m_object_t * get_object_device()
     }
 
     return deviceObj;
+}
+
+void update_memory_free(lwm2m_object_t * deviceObj)
+{
+    ((device_data_t*)deviceObj->userData)->free_memory = get_memory_free();
 }
 
 void free_object_device(lwm2m_object_t * objectP)

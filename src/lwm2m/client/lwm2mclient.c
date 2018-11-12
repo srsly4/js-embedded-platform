@@ -581,6 +581,7 @@ int init_lwm2m()
      */
     while (0 == g_quit)
     {
+        update_memory_free(objArray[2]);
         struct timeval tv;
         fd_set readfds;
 
