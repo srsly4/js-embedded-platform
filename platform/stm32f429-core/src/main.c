@@ -9,6 +9,7 @@
 #include <platform/debug.h>
 #include <eventloop.h>
 #include <module/gpio.h>
+#include <module/http.h>
 #include "common.h"
 #include "stm32f4xx_hal.h"
 #include "platform.h"
@@ -301,6 +302,7 @@ void platform_debug_led_off() {
 
 void platform_register_modules() {
     eventloop_register_module((module_t *) module_gpio_get());
+    eventloop_register_module((module_t *) module_http_get());
 }
 
 #pragma clang diagnostic pop

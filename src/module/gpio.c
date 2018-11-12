@@ -5,7 +5,7 @@
 
 #include "module/gpio.h"
 
-#define GPIO_MODULE_STASH_NAME "_gpio"
+#define HTTPS_MODULE_STASH_NAME "_gpio"
 
 static duk_ret_t gpio_setup(duk_context *ctx){
     uint32_t port = duk_require_uint(ctx, 0);
@@ -51,7 +51,7 @@ static const duk_function_list_entry gpio_module_funcs[] = {
 module_ret_t module_gpio_init(duk_context *ctx) {
     void *module_ptr = NULL;
     duk_push_global_stash(ctx);
-    if (duk_get_prop_string(ctx, -1, GPIO_MODULE_STASH_NAME) == 1) {
+    if (duk_get_prop_string(ctx, -1, HTTPS_MODULE_STASH_NAME) == 1) {
         module_ptr = duk_get_heapptr(ctx, -1);
         duk_pop(ctx);
     } else {
@@ -61,7 +61,7 @@ module_ret_t module_gpio_init(duk_context *ctx) {
         duk_put_number_list(ctx, -1, module_gpio_platform_get_const_list());
 
         module_ptr = duk_get_heapptr(ctx, -1);
-        duk_put_prop_string(ctx, -2, GPIO_MODULE_STASH_NAME);
+        duk_put_prop_string(ctx, -2, HTTPS_MODULE_STASH_NAME);
     }
     duk_pop(ctx); // pop global stack
     duk_push_heapptr(ctx, module_ptr); // will be returned module

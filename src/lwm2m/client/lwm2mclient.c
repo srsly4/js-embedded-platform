@@ -630,7 +630,7 @@ int init_lwm2m()
 //        }
 //        else
         {
-            tv.tv_sec = 60;
+            tv.tv_sec = 15;
         }
         tv.tv_usec = 0;
 
