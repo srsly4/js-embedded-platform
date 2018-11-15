@@ -59,7 +59,12 @@ static void prvInitialiseNewQueue( const UBaseType_t uxQueueLength, const UBaseT
     pxNewQueue->uxMessagesWaiting = ( UBaseType_t ) 0U;
     pxNewQueue->pcWriteTo = pxNewQueue->pcHead;
     pxNewQueue->pcReadFrom = pxNewQueue->pcHead + ( ( uxQueueLength - ( UBaseType_t ) 1U ) * uxItemSize );
-    pthread_mutex_init(&pxNewQueue->mutex, NULL);
+
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
+
+    pthread_mutex_init(&pxNewQueue->mutex, &attr);
     pthread_cond_init(&pxNewQueue->cond, NULL);
 }
 
