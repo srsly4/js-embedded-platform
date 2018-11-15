@@ -274,105 +274,6 @@ void lwm2m_close_connection(void * sessionH,
     }
 }
 
-#ifdef LWM2M_BOOTSTRAP
-
-static void prv_backup_objects(lwm2m_context_t * context)
-{
-    uint16_t i;
-
-    for (i = 0; i < BACKUP_OBJECT_COUNT; i++) {
-        if (NULL != backupObjectArray[i]) {
-            switch (backupObjectArray[i]->objID)
-            {
-                case LWM2M_SECURITY_OBJECT_ID:
-                    clean_security_object(backupObjectArray[i]);
-                    lwm2m_free(backupObjectArray[i]);
-                    break;
-                case LWM2M_SERVER_OBJECT_ID:
-                    clean_server_object(backupObjectArray[i]);
-                    lwm2m_free(backupObjectArray[i]);
-                    break;
-                default:
-                    break;
-            }
-        }
-        backupObjectArray[i] = (lwm2m_object_t *)lwm2m_malloc(sizeof(lwm2m_object_t));
-        memset(backupObjectArray[i], 0, sizeof(lwm2m_object_t));
-    }
-
-    /*
-     * Backup content of objects 0 (security) and 1 (server)
-     */
-    copy_security_object(backupObjectArray[0], (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SECURITY_OBJECT_ID));
-    copy_server_object(backupObjectArray[1], (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SERVER_OBJECT_ID));
-}
-
-static void prv_restore_objects(lwm2m_context_t * context)
-{
-    lwm2m_object_t * targetP;
-
-    /*
-     * Restore content  of objects 0 (security) and 1 (server)
-     */
-    targetP = (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SECURITY_OBJECT_ID);
-    // first delete internal content
-    clean_security_object(targetP);
-    // then restore previous object
-    copy_security_object(targetP, backupObjectArray[0]);
-
-    targetP = (lwm2m_object_t *)LWM2M_LIST_FIND(context->objectList, LWM2M_SERVER_OBJECT_ID);
-    // first delete internal content
-    clean_server_object(targetP);
-    // then restore previous object
-    copy_server_object(targetP, backupObjectArray[1]);
-
-    // restart the old servers
-    fprintf(stdout, "[BOOTSTRAP] ObjectList restored\r\n");
-}
-
-static void update_bootstrap_info(lwm2m_client_state_t * previousBootstrapState,
-                                  lwm2m_context_t * context)
-{
-    if (*previousBootstrapState != context->state)
-    {
-        *previousBootstrapState = context->state;
-        switch(context->state)
-        {
-            case STATE_BOOTSTRAPPING:
-#ifdef WITH_LOGS
-                fprintf(stdout, "[BOOTSTRAP] backup security and server objects\r\n");
-#endif
-                prv_backup_objects(context);
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-static void close_backup_object()
-{
-    int i;
-    for (i = 0; i < BACKUP_OBJECT_COUNT; i++) {
-        if (NULL != backupObjectArray[i]) {
-            switch (backupObjectArray[i]->objID)
-            {
-                case LWM2M_SECURITY_OBJECT_ID:
-                    clean_security_object(backupObjectArray[i]);
-                    lwm2m_free(backupObjectArray[i]);
-                    break;
-                case LWM2M_SERVER_OBJECT_ID:
-                    clean_server_object(backupObjectArray[i]);
-                    lwm2m_free(backupObjectArray[i]);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-}
-#endif
-
 int init_discovery()
 {
     int discoverySocket;
@@ -661,9 +562,6 @@ int init_lwm2m()
             unavailableTimes = 0;
         }
 
-#ifdef LWM2M_BOOTSTRAP
-        update_bootstrap_info(&previousState, lwm2mH);
-#endif
         /*
          * This part will set up an interruption until an event happen on SDTIN or the socket until "tv" timed out (set
          * with the precedent function)
@@ -748,9 +646,6 @@ int init_lwm2m()
         free(pskBuffer);
 #endif
 
-#ifdef LWM2M_BOOTSTRAP
-        close_backup_object();
-#endif
         lwm2m_close(lwm2mH);
     }
     close(data.sock);

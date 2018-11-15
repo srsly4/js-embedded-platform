@@ -32,7 +32,7 @@ struct timer_item_struct_t {
 
 
 pthread_t eventloop_thread;
-QueueHandle_t queue;
+QueueHandle_t queue = NULL;
 
 static callback_t _received_callback;
 
@@ -72,15 +72,22 @@ void start_eventloop_thread() {
 }
 
 void kill_eventloop_thread() {
+retry:
     CRITICAL_SECTION_ENTER();
     if (err) {
         goto eventloop_killed;
     }
+    else if (queue == NULL)
+    {
+        CRITICAL_SECTION_EXIT();
+        goto retry;
+    }
+    queue->locked = pdTRUE;
     pthread_cancel(eventloop_thread);
     pthread_join(eventloop_thread, NULL);
     clear_eventloop();
     vQueueDelete(queue);
-    eventloop_killed:
+eventloop_killed:
     queue = NULL;
     err = -1;
     CRITICAL_SECTION_EXIT();

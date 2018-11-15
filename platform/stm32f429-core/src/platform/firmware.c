@@ -95,6 +95,8 @@ uint8_t firmware_platform_write_finish(void) {
     return FIRMWARE_SUCC;
 }
 
+void firmware_platform_write_cleanup() {}
+
 const char *firmware_platform_get_name() {
     return flash_metadata.preambule == FIRMWARE_BINARY_PREAMBLE ? flash_metadata.name_ptr : NULL;
 }

@@ -174,6 +174,7 @@ uint8_t firmware_downloader_start(const char *uri) {
 
     cleanup:
     close(socket_fd);
+    firmware_platform_write_cleanup();
     if (buff) {
         free(buff);
     }
