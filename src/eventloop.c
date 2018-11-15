@@ -58,8 +58,9 @@ static const char test_code[] = "var gpio = require('gpio');var sw = false;"
                                 "gpio.setup(gpio.PORTB, gpio.PIN0, gpio.MODE_OUT_PP, gpio.NOPULL);"
                                 "gpio.setup(gpio.PORTB, gpio.PIN7, gpio.MODE_OUT_PP, gpio.NOPULL);"
                                 "gpio.setup(gpio.PORTC, gpio.PIN13, gpio.MODE_IN, gpio.PULLDOWN);"
-                                "setInterval(function(){ gpio.set(gpio.PORTB, gpio.PIN0, sw); sw = !sw; }, 250);"
-                                "setInterval(function(){ var isSet = gpio.get(gpio.PORTC, gpio.PIN13); gpio.set(gpio.PORTB, gpio.PIN7, isSet); }, 150);";
+                                "var a = setInterval(function(){ gpio.set(gpio.PORTB, gpio.PIN0, sw); sw = !sw; }, 250);"
+                                "var b = setInterval(function(){ var isSet = gpio.get(gpio.PORTC, gpio.PIN13); gpio.set(gpio.PORTB, gpio.PIN7, isSet); }, 150);"
+                                "setTimeout(function(){ clearInterval(a); setTimeout(function() { clearInterval(b) }, 20000) }, 10000)";
 
 static duk_ret_t eventloop_native_set_timeout(duk_context *ctx) {
     uint64_t timeout;
@@ -235,7 +236,10 @@ char* get_user_code() {
 
 void clear_eventloop() {
     eventloop_platform_timers_cleanup();
-    duk_gc(ctx, 0);
+    if (ctx != NULL)
+    {
+        duk_gc(ctx, 0);
+    }
 
     // destroy all callbacks
     callback_t *c_ptr, *c_next;
