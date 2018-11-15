@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
-#include "queue.h"
+#include "platform/queue.h"
 
 static void prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQueue )
 {
@@ -105,7 +105,7 @@ BaseType_t vQueueDelete(QueueHandle_t xQueue)
     return pdPASS;
 }
 
-BaseType_t xQueueSend( QueueHandle_t xQueue, const void * const pvItemToQueue, const BaseType_t xCopyPosition )
+BaseType_t xQueueSend(QueueHandle_t xQueue, const void * const pvItemToQueue )
 {
     Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
@@ -169,6 +169,10 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue, void * const pvBuffer, const Bas
     if( xJustPeeking == pdTRUE )
     {
         pxQueue->pcReadFrom = pcOriginalReadPosition;
+    }
+    else
+    {
+        pxQueue->uxMessagesWaiting--;
     }
     pthread_cond_broadcast(&pxQueue->cond);
     pthread_mutex_unlock(&pxQueue->mutex);
