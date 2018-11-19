@@ -13,7 +13,7 @@ add_definitions(-DLWM2M_CLIENT_MODE -DLWM2M_BOOTSTRAP -DLWM2M_SUPPORT_JSON)
 include_directories(include)
 
 file(GLOB_RECURSE SOURCES "drivers/*.*" "src/*.c" "include/*.*")
-if (PLATFORM MATCHES "nucleo-f429zi|unix")
+if (PLATFORM MATCHES "nucleo-f429zi|unix|raspberrypi")
     include(platform/${PLATFORM}/CMakeLists.txt)
 else()
     message(FATAL_ERROR "Unknown PLATFORM option: ${PLATFORM}. Use cmake . -DPLATFORM=<platform>")
