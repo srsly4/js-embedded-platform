@@ -7,6 +7,8 @@ module_ret_t module_gpio_platform_init()
     return ERR_MODULE_SUCC;
 }
 
+void module_gpio_platform_cleanup(duk_context *ctx) { }
+
 void module_gpio_platform_setup(uint32_t port, uint32_t pin, uint32_t direction, uint32_t pullup_type) {
     GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_InitStruct.Pin = pin;
