@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_SIZE 1024 * 1024 * 1024
+#define MAX_SIZE 1024 * 1024
 #define FIRMWARE_NAME "firmware"
 
 char code[MAX_SIZE];
