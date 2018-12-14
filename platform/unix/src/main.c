@@ -8,7 +8,6 @@
 #include <platform/lwm2md.h>
 #include <platform/debug.h>
 #include <eventloop.h>
-#include <module/gpio.h>
 #include "common.h"
 #include "platform.h"
 #include <pthread.h>
@@ -100,10 +99,9 @@ void platform_debug_led_off() {
 //    printf("LedOFF\n");
 }
 
-void platform_register_modules() {
-    eventloop_register_module((module_t *) module_gpio_get());
-}
-
+#ifdef UNIX
+void platform_register_modules() { }
+#endif
 
 uint32_t platform_rand() {
     return rand();

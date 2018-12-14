@@ -50,6 +50,9 @@ static const duk_function_list_entry gpio_module_funcs[] = {
 
 module_ret_t module_gpio_init(duk_context *ctx) {
     void *module_ptr = NULL;
+    if ((module_gpio_platform_init()) != ERR_MODULE_SUCC) {
+        return ERR_MODULE_MEM;
+    }
     duk_push_global_stash(ctx);
     if (duk_get_prop_string(ctx, -1, GPIO_MODULE_STASH_NAME) == 1) {
         module_ptr = duk_get_heapptr(ctx, -1);
@@ -72,7 +75,7 @@ static const module_t gpio_module = {
         "gpio",
         &module_gpio_init,
         NULL,
-        NULL
+        &module_gpio_platform_cleanup
 };
 
 const module_t* module_gpio_get() {
