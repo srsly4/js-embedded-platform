@@ -82,7 +82,7 @@ int main(void){
 
     pthread_create(&mainTaskHandle, NULL, start_main_task, NULL);
 
-    pthread_exit(0);
+    pthread_join(mainTaskHandle, NULL);
 }
 
 void platform_sleep(uint32_t ms) {

@@ -25,7 +25,12 @@ set(SOURCES ${SOURCES} ${PLATFORM_SOURCES})
 
 include_directories(${PLATFORM_DIRECTORY}/include)
 
+find_library(RT rt)
+find_library(PTHREAD pthread)
+find_library(LIBC c)
+find_library(LIBM m)
+
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} rt pthread c m)
+target_link_libraries(${PROJECT_NAME} ${RT} ${PTHREAD} ${LIBC} ${LIBM})
 
 add_custom_target(firmware DEPENDS ${PROJECT_NAME})
